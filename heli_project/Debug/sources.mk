@@ -115,4 +115,6 @@ SUBDIRS := \
 FreeRTOS \
 FreeRTOS/portable/CCS/ARM_CM4F \
 FreeRTOS/portable/MemMang \
+OrbitOLED \
+OrbitOLED/lib_OrbitOled \
 
