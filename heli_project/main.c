@@ -39,6 +39,20 @@
 char text_buffer[16];    // global for now
 
 
+
+void blinkLED(void *pvParameters) {\
+    uint8_t pin = (*(uint8_t *) pvParameters);
+    uint32_t st = GPIOPinRead(LED_GPIO_BASE, pin);
+    uint8_t current = 0;
+
+    while(1) {
+        current ^= pin;
+        GPIOPinWrite(LED_GPIO_BASE, pin, current);
+        vTaskDelay(LED_BLINK_RATE / portTICK_RATE_MS);
+    }
+}
+
+
 // Initialize the program
 void initialize(void) {
     // Set the clock rate to 80 MHz
@@ -46,11 +60,26 @@ void initialize(void) {
 
     initButtons();
     initDisplay();
+    static uint8_t led = LED_GPIO_PIN;
+
+    // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);               // off by default
+
+    if (pdTRUE != xTaskCreate(blinkLED, "Blinker", 32, (void *) &led, 4, NULL))
+    {
+        while(1);               // Oh no! Must not have had enough memory to create the task.
+    }
 }
 
 
 void main(void) {
     initialize();
+    vTaskStartScheduler();      // Start FreeRTOS!!
 
     //*******************
     // Code to test buttons

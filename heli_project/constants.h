@@ -54,4 +54,13 @@
 #define REF_PIN GPIO_PIN_4
 
 
+// LED constants
+#define LED_BLINK_RATE 1000
+#define LED_GPIO_BASE GPIO_PORTF_BASE
+#define LED_RED_PIN GPIO_PIN_1
+#define LED_BLUE_PIN GPIO_PIN_2
+#define LED_GREEN_PIN GPIO_PIN_3
+
+
+
 #endif /* CONSTANTS_H_ */
