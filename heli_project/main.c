@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
@@ -26,20 +27,41 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "buttons4.h"
+
+#include "OLEDDisplay.h"
 
 
+// Initialize the program
+void initialize(void) {
+    // Set the clock rate to 80 MHz
+    SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
+    initButtons();
+    initDisplay();
+}
 
 
 void main(void) {
-    // Set the clock rate to 20 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
+    initialize();
 
-    // Initialise the Orbit OLED display
-    OLEDInitialise ();
-    OLEDStringDraw ("PWM", 0, 0);
-    OLEDStringDraw ("Characteristics", 0, 1);
+    //*******************
+    // Code to test buttons
+    //*******************
+    uint8_t count = 0;
+    uint32_t clock_rate = SysCtlClockGet();
 
-    while(1);
+    while(1) {
+        updateButtons();
+
+        if (checkButton (UP) == PUSHED) {
+            count++;
+            sprintf(TEXT_BUFFER, "Button Presses %d", count);
+            writeDisplay(TEXT_BUFFER, LINE_1);
+        }
+
+
+        SysCtlDelay(clock_rate / 150);
+    }
+    //*********************
 }
