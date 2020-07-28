@@ -60,7 +60,7 @@ void initialize(void) {
 
     initButtons();
     initDisplay();
-    static uint8_t led = LED_GPIO_PIN;
+    static uint8_t led = LED_RED_PIN;
 
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
