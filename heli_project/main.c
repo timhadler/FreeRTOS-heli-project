@@ -36,6 +36,7 @@
 //******************************************************************
 // Global Variables
 //******************************************************************
+char text_buffer[16];    // global for now
 
 
 // Initialize the program
@@ -62,8 +63,8 @@ void main(void) {
 
         if (checkButton (UP) == PUSHED) {
             count++;
-            sprintf(TEXT_BUFFER, "Button Presses %d", count);
-            writeDisplay(TEXT_BUFFER, LINE_1);
+            sprintf(text_buffer, "Button Presses %d", count);
+            writeDisplay(text_buffer, LINE_1);
         }
 
 
