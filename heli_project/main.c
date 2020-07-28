@@ -30,6 +30,12 @@
 #include "buttons4.h"
 
 #include "OLEDDisplay.h"
+#include "constants.h"
+
+
+//******************************************************************
+// Global Variables
+//******************************************************************
 
 
 // Initialize the program
