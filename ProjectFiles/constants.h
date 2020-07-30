@@ -26,11 +26,9 @@
 //*****************************
 // Values here may need to be revised
 //*****************************
-#define BUF_SIZE 10     // Circular buffer size
-#define SAMPLE_RATE_HZ 253
 #define BUTT_POLLING_RATE_HZ 50
 #define DISPLAY_RATE 60
-#define MAX 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
+#define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
 
 
 // define Yaw gpio base and pins
