@@ -86,11 +86,11 @@ uint16_t getHeight(void) {
     //diff = (landedAvg - buffAvg)*100;// * 100;
     //height = (int8_t) (diff / MAX_HEIGHT);
 
-    return height;
+    return buffAvg;
 }
 
 
-void blinkLED(void *pvParameters) {
+void blinkLED(void* pvParameters) {
     uint8_t pin = (*(uint8_t *) pvParameters);
     uint8_t current = 0;
 
@@ -98,6 +98,21 @@ void blinkLED(void *pvParameters) {
         current ^= pin;
         GPIOPinWrite(LED_GPIO_BASE, pin, current);
         vTaskDelay(LED_BLINK_RATE / portTICK_RATE_MS);
+    }
+}
+
+
+void pollButton(void* pvParameters) {
+    static uint8_t count = 0;
+
+    while (1) {
+        //updateButtons();
+        //if (checkButton (UP) == PUSHED) {
+            count++;
+            sprintf(text_buffer, "Button Presses %d", count);
+            writeDisplay(text_buffer, LINE_1);
+        //}
+        vTaskDelay(1000/portTICK_RATE_MS);
     }
 }
 
@@ -139,16 +154,17 @@ void initClocks(void) {
     // Set the clock rate to 80 MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
-    // Set up the period for the SysTick timer.  The SysTick timer period is
-    // set as a function of the system clock.
-    SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
+    // NOTE: I used the systick counter to inititaie ADC sampling, however when using FreeRTOS we need to
+    //       Leave sysTick alone, will cause errors
+
+/*    SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
     //
     // Register the interrupt handler
     SysTickIntRegister(SysTickIntHandler);
 
     // Enable interrupt and device
     SysTickIntEnable();
-    SysTickEnable();
+    SysTickEnable();*/
 }
 
 
@@ -167,7 +183,7 @@ void initialize(void) {
 
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);               // off by default
+    GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
 
 
 
@@ -175,13 +191,18 @@ void initialize(void) {
     {
         while(1);               // Oh no! Must not have had enough memory to create the task.
     }
+
+/*    if (pdTRUE != xTaskCreate(pollButton, "Button Poll", 32, (void *) &led, 3, NULL))
+    {
+        while(1);               // Oh no! Must not have had enough memory to create the task.
+    }*/
+    IntMasterEnable();
 }
 
 
 void main(void) {
     initialize();
-    IntMasterEnable();
-    //vTaskStartScheduler();
+    vTaskStartScheduler();
 
     //*******************
     // Code to test buttons
