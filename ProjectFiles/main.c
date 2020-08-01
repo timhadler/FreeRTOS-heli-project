@@ -122,27 +122,11 @@ void initADC(void) {
 }
 
 
-void initClocks(void) {
-    // Set the clock rate to 80 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
-
-    // NOTE: I used the systick counter to inititaie ADC sampling, however when using FreeRTOS we need to
-    //       Leave sysTick alone, will cause errors
-
-/*    SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
-    //
-    // Register the interrupt handler
-    SysTickIntRegister(SysTickIntHandler);
-
-    // Enable interrupt and device
-    SysTickIntEnable();
-    SysTickEnable();*/
-}
-
-
 // Initialize the program
 void initialize(void) {
-    initClocks();
+    // Set clock to 80MHz
+    SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+
     initADC();
     initButtons();
     initDisplay();
