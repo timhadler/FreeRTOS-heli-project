@@ -102,6 +102,8 @@ void blinkLED(void* pvParameters) {
         current ^= pin;
         GPIOPinWrite(LED_GPIO_BASE, pin, current);
         vTaskDelay(LED_BLINK_RATE / portTICK_RATE_MS);
+        //vTaskDelay( pdMS_TO_TICKS( 100 ) ) delays task for 100ms
+        //Can possibly use vTaskDelayUntil() for fixed frequency tasks
     }
 }
 
