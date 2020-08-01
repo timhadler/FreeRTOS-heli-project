@@ -69,6 +69,10 @@ void SysTickIntHandler(void) {
 //function to calculate current height as percentage
 //TODO: Figure out how to to calculate height as a percentage
 //      The value returned by getBuffAvg is fine, just need to convert it to height
+//1/08/20 - In current state, adc will not be working so will not be getting proper vals from getBuffer
+//          the adc sampling was og initiated by the sysTickIntHnadler, directly above
+//          however we cannot use the sysTickClk as freeRTOS does some funcky stuff with it
+//          My first thought is to create a task to trigger samples, or ustilize a freeRTOS timer counter if thats possible
 uint16_t getHeight(void) {
 
     int8_t height = 0;
