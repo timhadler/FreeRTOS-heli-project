@@ -157,29 +157,6 @@ void main(void) {
     initialize();
     startFreeRTOS();
 
-    //*******************
-    // Code to test buttons
-    //*******************
-    uint8_t count = 0;
-    uint32_t clock_rate = SysCtlClockGet();
-
-    while(1) {
-        updateButtons();
-        if (checkButton (UP) == PUSHED) {
-            count++;
-            sprintf(text_buffer, "Button Presses %d", count);
-            writeDisplay(text_buffer, LINE_1);
-            //OLEDStringDraw(text_buffer, 0, 1);
-        }
-
-
-        height = getHeight();
-        //sprintf(text_buffer, "                ", height);
-        sprintf(text_buffer, "Height: %d", height);
-        writeDisplay(text_buffer, LINE_2);
-
-
-        SysCtlDelay(clock_rate / 150);
-    }
-    //*********************
+    // Should never get here
+    while(1) {}
 }
