@@ -90,6 +90,10 @@ uint16_t getHeight(void) {
 }
 
 
+// FreeRTOS note: functions like this are called continuous, because it does not have to wait for anything
+//                and so is never blocked, and always ready to execute. 
+//                Continuus functions have limited use as they MUST be assigned a low priority
+//                otherwise they will prevent lower priority tasks from ever running, because they will always un first
 void blinkLED(void* pvParameters) {
     uint8_t pin = (*(uint8_t *) pvParameters);
     uint8_t current = 0;
