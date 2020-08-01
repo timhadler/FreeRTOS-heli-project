@@ -25,13 +25,13 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "buttons4.h"
 
 #include "OLEDDisplay.h"
 #include "constants.h"
 #include "buffer.h"
+#include "myTasks.h"
+#include "myFreeRTOS.h"
 
 
 //******************************************************************
@@ -90,44 +90,10 @@ uint16_t getHeight(void) {
 }
 
 
-// FreeRTOS note: functions like this are called continuous, because it does not have to wait for anything
-//                and so is never blocked, and always ready to execute. 
-//                Continuus functions have limited use as they MUST be assigned a low priority
-//                otherwise they will prevent lower priority tasks from ever running, because they will always un first
-void blinkLED(void* pvParameters) {
-    uint8_t pin = (*(uint8_t *) pvParameters);
-    uint8_t current = 0;
-
-    while(1) {
-        current ^= pin;
-        GPIOPinWrite(LED_GPIO_BASE, pin, current);
-        vTaskDelay(LED_BLINK_RATE / portTICK_RATE_MS);
-        //vTaskDelay( pdMS_TO_TICKS( 100 ) ) delays task for 100ms
-        //Can possibly use vTaskDelayUntil() for fixed frequency tasks
-    }
-}
-
-
-void pollButton(void* pvParameters) {
-    static uint8_t count = 0;
-
-    while (1) {
-        //updateButtons();
-        //if (checkButton (UP) == PUSHED) {
-            count++;
-            sprintf(text_buffer, "Button Presses %d", count);
-            writeDisplay(text_buffer, LINE_1);
-        //}
-        vTaskDelay(1000/portTICK_RATE_MS);
-    }
-}
-
-
 void initADC(void) {
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-    // TODO: This delay allows the peripheral to fully configure, adjust value 1 second is too long
-    SysCtlDelay(SysCtlClockGet() / 3);// 1 sec delay
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_ADC0));
 
     // Enable sample sequence 3 with a processor signal trigger.  Sequence 3
     // will do a single sample when the processor sends a signal to start the
@@ -190,25 +156,22 @@ void initialize(void) {
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
     GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
+    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
+    GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
 
 
+    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL);
+    createTask(pollButton, "Button Poll", 32, (void *) NULL, 3, NULL);
 
-    if (pdTRUE != xTaskCreate(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL))
-    {
-        while(1);               // Oh no! Must not have had enough memory to create the task.
-    }
 
-/*    if (pdTRUE != xTaskCreate(pollButton, "Button Poll", 32, (void *) &led, 3, NULL))
-    {
-        while(1);               // Oh no! Must not have had enough memory to create the task.
-    }*/
     IntMasterEnable();
 }
 
 
 void main(void) {
     initialize();
-    vTaskStartScheduler();
+    startFreeRTOS();
 
     //*******************
     // Code to test buttons
