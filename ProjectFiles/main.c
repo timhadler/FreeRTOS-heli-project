@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "myTasks.h"
 #include "myFreeRTOS.h"
+#include "myMotors.h"
 
 
 //******************************************************************
@@ -40,7 +41,6 @@
 // global for now
 char text_buffer[16];
 uint16_t height = 0;
-
 
 //******************************************************************
 // Functions
@@ -159,8 +159,15 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    startFreeRTOS();
+    //startFreeRTOS();
+    initMotors();
 
+    setMotor(1, 100, 44);
+    setMotor(0, 100, 37);
     // Should never get here
-    while(1) {}
+    while(1) {
+        uint16_t avg = 5;
+        sprintf(text_buffer, "ADC AVG: %d", avg);
+        writeDisplay(text_buffer, LINE_2);
+    }
 }
