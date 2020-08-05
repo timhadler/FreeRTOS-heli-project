@@ -14,7 +14,7 @@
 
 #define LED_BLINK_PERIOD_MS 2000
 #define BUTTON_POLL_RATE_HZ 50
-
+#define SAMPLE_RATE_HZ 250
 
 //******************************************************************
 // Functions

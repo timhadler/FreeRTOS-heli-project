@@ -24,7 +24,6 @@
 
 #include "utils/ustdlib.h"
 #include "stdlib.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "buttons4.h"
 
 #include "OLEDDisplay.h"
@@ -32,6 +31,7 @@
 #include "buffer.h"
 #include "myTasks.h"
 #include "myFreeRTOS.h"
+#include "OLEDDisplay.h"
 
 
 //******************************************************************
@@ -133,7 +133,7 @@ void initialize(void) {
 
     initADC();
     initButtons();
-    initDisplay();
+    //initDisplay();
     initBuffer();
     static uint8_t led = LED_RED_PIN;
 
@@ -159,8 +159,12 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    startFreeRTOS();
+    initDisplay();
+    //startFreeRTOS();
 
     // Should never get here
-    while(1) {}
+    while(1) {
+        sprintf(text_buffer, "Rand num: %d", getHeight());
+        writeDisplay(text_buffer, LINE_2);
+    }
 }

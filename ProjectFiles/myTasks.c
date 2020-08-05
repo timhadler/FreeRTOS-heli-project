@@ -43,3 +43,11 @@ void pollButton(void* pvParameters) {
         taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
     }
 }
+
+
+void TriggerADC() {
+    while (1) {
+        // trigger adc
+        // wait
+    }
+}
