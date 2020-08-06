@@ -20,6 +20,7 @@
 #define YAW_CHA_INT_PIN GPIO_INT_PIN_0
 #define YAW_CHB_INT_PIN GPIO_INT_PIN_1
 
+#define DISK_INTERRUPTS 448 // The number of readings in the slotted disk (4 * (112 slots) in a rev)
 
 
 void initYaw(void);

@@ -13,6 +13,8 @@
 #include "myYaw.h"
 #include "OLEDDisplay.h"
 
+enum quadrature {A=0, B=1, C=3, D=2}; // Sets the values for the finite state machine
+
 
 void initYaw(void) {
     // Initialize yaw signals
@@ -45,21 +47,75 @@ void YawIntHandler(void) {
 
 
 void processYaw(void* pvParameters) {
-    static uint8_t c = 0;
     char text_buffer[16];
+
+    int16_t yaw = 0;
+    int32_t slots;
+    int32_t currentState;
+    int32_t nextState;
     while(1) {
         if (pdPASS != xSemaphoreTake(xYawSemaphore, portMAX_DELAY)) {
            while(1) {};
         }
 
-        sprintf(text_buffer, "Count: %d", c);
+        nextState = GPIOPinRead(YAW_GPIO_BASE, CH_A | CH_B);
+        /* A finite state machine has been used looks at the current state and the next state.
+           There are four states read from the pins: A, B, C, and D, where A = 00, B = 01, C = 11, and D = 10. */
+        switch(currentState)
+        {
+            case A:
+                switch(nextState)
+                {
+                case B:
+                    slots--; // Decreases the slot count (anticlockwise)
+                    break;
+                case D:
+                    slots++; // Increases the slot count (clockwise)
+                    break;
+                }
+                break;
+            case B:
+                switch(nextState)
+                {
+                case A:
+                    slots++; // Increases the slot count (clockwise)
+                    break;
+                case C:
+                    slots--; // Decreases the slot count (anticlockwise)
+                    break;
+                }
+                break;
+            case C:
+                switch(nextState)
+                {
+                case B:
+                    slots++; // Increases the slot count (clockwise)
+                    break;
+                case D:
+                    slots--; // Decreases the slot count (anticlockwise)
+                    break;
+                }
+                break;
+            case D:
+                switch(nextState)
+                {
+                case A:
+                    slots--; // Decreases the slot count (anticlockwise)
+                    break;
+                case C:
+                    slots++; // Increases the slot count (clockwise)
+                    break;
+                }
+                break;
+        }
+        currentState = nextState;
+        // Limits the yaw to +-180 degees from the reference point
+        if (slots == 224 || slots == -224) {
+            slots = slots*-1; // Switches the sign of yaw angle
+        }
+
+        yaw = (360 * slots) / DISK_INTERRUPTS;
+        sprintf(text_buffer, "Yaw: %d", yaw);
         writeDisplay(text_buffer, 1);
-        c++;
-        taskDelayMS(1);
-
-
-
-
-        // Do yaw stuff
     }
 }
