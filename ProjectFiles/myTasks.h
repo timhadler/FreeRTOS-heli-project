@@ -14,7 +14,7 @@
 //******************************************************************
 
 #define LED_BLINK_PERIOD_MS 2000
-#define BUTTON_POLL_RATE_HZ 50
+#define BUTTON_POLL_RATE_HZ 80
 
 
 //******************************************************************
@@ -31,9 +31,8 @@ void blinkLED(void* pvParameters);
 
 void pollButton(void* pvParameters);
 
-void processYaw(void* pvParameters);
 
-void displayOLED(void* pvParameters);
+
 
 
 #endif /* MYTASKS_H_ */
