@@ -151,10 +151,10 @@ void initialize(void) {
     GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
 
 
-    //createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL);
-    createTask(pollButton, "Button Poll", 32, (void *) NULL, 3, NULL);
-    //createTask(processYaw, "Yaw stuff", 32, (void *) &led, 4, NULL);
-    createTask(displayOLED, "display", 32, (void *) NULL, 4, NULL);
+    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
+    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
+    //createTask(displayOLED, "display", 200, (void *) NULL, 4, NULL);
 
 
     IntMasterEnable();
@@ -163,7 +163,7 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    createSemaphores(NULL);
+    createSemaphores();
     startFreeRTOS();
 
     setMotor(1, 100, 44);
