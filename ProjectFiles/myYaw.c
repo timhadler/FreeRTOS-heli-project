@@ -15,6 +15,8 @@
 
 enum quadrature {A=0, B=1, C=3, D=2}; // Sets the values for the finite state machine
 
+int16_t yaw;
+
 
 void initYaw(void) {
     // Initialize yaw signals
@@ -46,13 +48,16 @@ void YawIntHandler(void) {
 }
 
 
-void processYaw(void* pvParameters) {
-    char text_buffer[16];
+int16_t getYaw(void) {
+    return yaw;
+}
 
-    int16_t yaw = 0;
-    int32_t slots;
-    int32_t currentState;
-    int32_t nextState;
+
+void processYaw(void* pvParameters) {
+    int32_t slots = 0;
+    int32_t currentState = 0;
+    int32_t nextState = 0;
+
     while(1) {
         if (pdPASS != xSemaphoreTake(xYawSemaphore, portMAX_DELAY)) {
            while(1) {};
@@ -109,13 +114,11 @@ void processYaw(void* pvParameters) {
                 break;
         }
         currentState = nextState;
+
         // Limits the yaw to +-180 degees from the reference point
         if (slots == 224 || slots == -224) {
             slots = slots*-1; // Switches the sign of yaw angle
         }
-
         yaw = (360 * slots) / DISK_INTERRUPTS;
-        sprintf(text_buffer, "Yaw: %d", yaw);
-        writeDisplay(text_buffer, 1);
     }
 }

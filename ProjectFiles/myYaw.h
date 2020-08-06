@@ -27,6 +27,8 @@ void initYaw(void);
 
 void YawIntHandler(void);
 
+int16_t getYaw(void);
+
 void processYaw(void* pvParameters);
 
 #endif /* MYYAW_H_ */
