@@ -7,11 +7,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
+#include <stdio.h>
 #include "myFreeRTOS.h"
+#include "semphr.h"
 #include "myYaw.h"
+#include "OLEDDisplay.h"
 
 
 void initYaw(void) {
@@ -37,8 +37,29 @@ void YawIntHandler(void) {
     intStatus = GPIOIntStatus(YAW_GPIO_BASE, true);
 
     if (pdPASS != xSemaphoreGiveFromISR(xYawSemaphore, &xHigherPriorityTaskWoken)) {
-        while(1) {};
+        //while(1) {};
     }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     GPIOIntClear(YAW_GPIO_BASE, intStatus);
+}
+
+
+void processYaw(void* pvParameters) {
+    static uint8_t c = 0;
+    char text_buffer[16];
+    while(1) {
+        if (pdPASS != xSemaphoreTake(xYawSemaphore, portMAX_DELAY)) {
+           while(1) {};
+        }
+
+        sprintf(text_buffer, "Count: %d", c);
+        writeDisplay(text_buffer, 1);
+        c++;
+        taskDelayMS(1);
+
+
+
+
+        // Do yaw stuff
+    }
 }
