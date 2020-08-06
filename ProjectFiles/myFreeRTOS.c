@@ -43,7 +43,7 @@ void taskDelayMS(uint16_t delay_ms) {
 }
 
 
-void createSemaphores(void* pvParameters) {
+void createSemaphores() {
     xYawSemaphore = xSemaphoreCreateBinary();
 
     if (xYawSemaphore == NULL) {
