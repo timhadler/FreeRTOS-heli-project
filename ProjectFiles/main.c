@@ -150,7 +150,7 @@ void createTasks(void) {
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) &yaw, 3, NULL);
-    createTask(controller, "controller", 200, (void *) NULL, 2, NULL);
+    createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
 }
 
 
