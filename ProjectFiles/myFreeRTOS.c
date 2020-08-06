@@ -11,6 +11,7 @@
 //                   However time-slicing may occur with other tasks assigned a priority of 0
 //                   Can force idle to always yield by configering in freeRTOS_config.h
 
+#include <stdio.h>
 #include "myFreeRTOS.h"
 
 
@@ -39,4 +40,13 @@ void startFreeRTOS(void) {
 
 void taskDelayMS(uint16_t delay_ms) {
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
+}
+
+
+void createSemaphores(void* pvParameters) {
+    xYawSemaphore = xSemaphoreCreateBinary();
+
+    if (xYawSemaphore == NULL) {
+        while(1){}
+    }
 }

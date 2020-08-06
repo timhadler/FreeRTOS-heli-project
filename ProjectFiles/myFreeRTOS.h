@@ -6,11 +6,19 @@
  */
 
 
-// Note on FreeRTOS: there must always be a function that is ready to execute.
+/* Note on FreeRTOS: there must always be a function that is ready to execute.
 //                   For this reason freeRTOS automatically creates a task called Idle, that does pretty much nothing,
 //                   Idle has lowest prioirty (0) so it does not preempt higher prioritized tasks
 //                   However time-slicing may occur with other tasks assigned a priority of 0
 //                   Can force idle to always yield by configering in freeRTOS_config.h
+
+                     Interrupts have priority over tasks, ie the lowest priority interrupt will
+                     pre-empt the highest priority task
+                     Note: Never call a FreeRTOS API function that does not have “FromISR” in its name from an ISR
+
+                     use atleast one semaphore, ine queue, and one mutex in the project
+ISR.
+*/
 
 
 #ifndef MYFREERTOS_H_
@@ -18,7 +26,11 @@
 
 #include <stdint.h>
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "task.h"
+
+
+SemaphoreHandle_t xYawSemaphore;
 
 
 // creates a task with FreeRTOS
@@ -37,5 +49,7 @@ void startFreeRTOS(void);
 
 // Creates a task delay through FreeRTOS for a given time in milliseconds
 void taskDelayMS(uint16_t delay_ms);
+
+void createSemaphores(void* pvParameters);
 
 #endif /* MYFREERTOS_H_ */

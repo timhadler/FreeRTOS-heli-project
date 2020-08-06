@@ -33,6 +33,7 @@
 #include "myTasks.h"
 #include "myFreeRTOS.h"
 #include "myMotors.h"
+#include "myYaw.h"
 
 
 //******************************************************************
@@ -135,8 +136,9 @@ void initialize(void) {
     initButtons();
     initDisplay();
     initBuffer();
+    initMotors();
+    initYaw();
     static uint8_t led = LED_RED_PIN;
-
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
@@ -149,8 +151,10 @@ void initialize(void) {
     GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
 
 
-    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL);
+    //createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL);
     createTask(pollButton, "Button Poll", 32, (void *) NULL, 3, NULL);
+    //createTask(processYaw, "Yaw stuff", 32, (void *) &led, 4, NULL);
+    createTask(displayOLED, "display", 32, (void *) NULL, 4, NULL);
 
 
     IntMasterEnable();
@@ -159,8 +163,8 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    //startFreeRTOS();
-    initMotors();
+    createSemaphores(NULL);
+    startFreeRTOS();
 
     setMotor(1, 100, 44);
     setMotor(0, 100, 37);

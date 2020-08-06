@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//*****************************************************************************
+// Constants
+//*****************************************************************************
 #define PWM_CLOCK_DIVIDER SYSCTL_PWMDIV_8
 #define PWM_DIVIDER 8
 
@@ -42,11 +45,21 @@
 #define MAIN 1
 #define TAIL 0
 
-typedef struct Motor_S {
+
+//*****************************************************************************
+// Funtion declarations
+//*****************************************************************************
+void initMotors(void);
+
+void setMotor(bool main, uint32_t freq, uint8_t duty);
+
+
+
+
+/*typedef struct Motor_S {
     uint32_t base;
     uint32_t gen;
     uint32_t outnum;
-};
-
+};*/
 
 #endif /* MYMOTORS_H_ */
