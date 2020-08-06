@@ -31,6 +31,7 @@ ISR.
 
 
 SemaphoreHandle_t xYawSemaphore;
+SemaphoreHandle_t xYawMutex;
 
 
 // creates a task with FreeRTOS
