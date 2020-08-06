@@ -9,8 +9,10 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "OLEDDisplay.h"
+#include "myFreeRTOS.h"
 
 
 // Initialise the Orbit OLED display
@@ -31,4 +33,16 @@ void ClearDisplayLine(uint8_t line) {
 void writeDisplay(char text[16], uint8_t line) {
     ClearDisplayLine(line);
     OLEDStringDraw(text, 0, line);
+}
+
+
+void displayOLED(void* pvParameters) {
+    char text_buffer[16];
+
+
+    while(1) {
+        sprintf(text_buffer, "ADC AVG: %d", 25);
+        writeDisplay(text_buffer, 1);
+        taskDelayMS(1);
+    }
 }
