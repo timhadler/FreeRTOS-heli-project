@@ -28,14 +28,6 @@
 #define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
 
 
-// define Yaw gpio base and pins
-#define CH_A   GPIO_PIN_0 // CHannel A and B for sensing yaw
-#define CH_B   GPIO_PIN_1
-#define YAW_PERIPH_GPIO SYSCTL_PERIPH_GPIOB
-#define YAW_GPIO_BASE GPIO_PORTB_BASE
-#define YAW_CHA_INT_PIN GPIO_INT_PIN_0
-#define YAW_CHB_INT_PIN GPIO_INT_PIN_1
-
 // Define MODE switch
 #define MODE_PERIPH_GPIO SYSCTL_PERIPH_GPIOA
 #define SWITCH_MODE_GPIO_BASE GPIO_PORTA_BASE
@@ -54,7 +46,6 @@
 #define LED_RED_PIN GPIO_PIN_1
 #define LED_BLUE_PIN GPIO_PIN_2
 #define LED_GREEN_PIN GPIO_PIN_3
-
 
 
 #endif /* CONSTANTS_H_ */
