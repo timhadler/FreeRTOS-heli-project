@@ -27,6 +27,8 @@
 
 #define configUSE_TICK_HOOK 0
 
+#define configUSE_MUTEXES 1
+
 #define INCLUDE_vTaskPrioritySet 0
 
 #define INCLUDE_uxTaskPriorityGet 0
@@ -39,7 +41,7 @@
 
 #define INCLUDE_vTaskDelay 1
 
-#define configUSE_16_BIT_TICKS 0 // not sure what this is - This sets the data type for the FreeRTOS tick interupt counter, 1->uint16, 0->uint32
+#define configUSE_16_BIT_TICKS 0 // not sure what this is
 
 #define configKERNEL_INTERRUPT_PRIORITY (7 << 5) // Lowest priority for RTOS periodic interrupts
 
