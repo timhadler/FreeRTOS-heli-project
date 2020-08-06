@@ -21,9 +21,11 @@
 #include "driverlib/systick.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
-
 #include "utils/ustdlib.h"
 #include "stdlib.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "buttons4.h"
 
@@ -41,6 +43,8 @@
 //******************************************************************
 // global for now
 char text_buffer[16];
+
+int16_t yaw;
 uint16_t height = 0;
 
 //******************************************************************
@@ -95,6 +99,18 @@ uint16_t getHeight(void) {
 }
 
 
+// Dunno what to call this yet
+// Will use getYaw and getHeight functions in here
+// Initiate PI controllers with semaphores
+void controller(void* pvParameters) {
+    while(1) {
+        yaw = getYaw();
+
+        taskDelayMS(1000/CONTROLLER_RATE_HZ);
+    }
+}
+
+
 void initADC(void) {
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
@@ -127,6 +143,17 @@ void initADC(void) {
 }
 
 
+void createTasks(void) {
+    static uint8_t led = LED_RED_PIN;
+
+    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
+    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
+    createTask(displayOLED, "display", 200, (void *) &yaw, 3, NULL);
+    createTask(controller, "controller", 200, (void *) NULL, 2, NULL);
+}
+
+
 // Initialize the program
 void initialize(void) {
     // Set clock to 80MHz
@@ -138,7 +165,8 @@ void initialize(void) {
     initBuffer();
     initMotors();
     initYaw();
-    static uint8_t led = LED_RED_PIN;
+    createTasks();
+
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
@@ -150,13 +178,6 @@ void initialize(void) {
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
     GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
 
-
-    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
-    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
-    createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
-    //createTask(displayOLED, "display", 200, (void *) NULL, 4, NULL);
-
-
     IntMasterEnable();
 }
 
@@ -166,9 +187,9 @@ void main(void) {
     createSemaphores();
     startFreeRTOS();
 
+    // Should never get here if startFreeRTOS is not un-commented
     setMotor(1, 100, 44);
     setMotor(0, 100, 37);
-    // Should never get here
     while(1) {
         uint16_t avg = 5;
         sprintf(text_buffer, "ADC AVG: %d", avg);
