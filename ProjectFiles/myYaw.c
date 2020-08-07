@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "driverlib/interrupt.h"
 #include "myFreeRTOS.h"
 #include "semphr.h"
 #include "myYaw.h"
@@ -15,7 +16,8 @@
 
 enum quadrature {A=0, B=1, C=3, D=2}; // Sets the values for the finite state machine
 
-int32_t slots = 0;
+int32_t slots;
+int16_t yaw;;
 
 void initYaw(void) {
     // Initialize yaw signals
@@ -40,7 +42,7 @@ void YawIntHandler(void) {
     intStatus = GPIOIntStatus(YAW_GPIO_BASE, true);
 
     if (pdPASS != xSemaphoreGiveFromISR(xYawSemaphore, &xHigherPriorityTaskWoken)) {
-        //while(1) {};
+        while(1) {};
     }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     GPIOIntClear(YAW_GPIO_BASE, intStatus);
@@ -48,9 +50,6 @@ void YawIntHandler(void) {
 
 
 int16_t getYaw(void) {
-    int16_t yaw = 0;
-    xSemaphoreTake(xYawMutex, portMAX_DELAY);   // Take access to yaw vaiable
-    yaw = (360 * slots) / DISK_INTERRUPTS;
     return yaw;
 }
 
@@ -61,7 +60,6 @@ void processYaw(void* pvParameters) {
 
     while(1) {
         xSemaphoreTake(xYawSemaphore, portMAX_DELAY);   // Block until Yaw interrupt
-        xSemaphoreTake(xYawMutex, portMAX_DELAY);       // Take access to yaw variable
 
         nextState = GPIOPinRead(YAW_GPIO_BASE, CH_A | CH_B);
         /* A finite state machine has been used looks at the current state and the next state.
@@ -119,6 +117,6 @@ void processYaw(void* pvParameters) {
         if (slots == 224 || slots == -224) {
             slots = slots*-1; // Switches the sign of yaw angle
         }
-        xSemaphoreGive(xYawMutex);      // Release access to yaw variable
+        yaw = (360 * slots) / DISK_INTERRUPTS;
     }
 }

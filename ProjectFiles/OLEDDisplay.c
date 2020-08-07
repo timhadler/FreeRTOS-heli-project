@@ -38,15 +38,4 @@ void writeDisplay(char text[16], uint8_t line) {
     OLEDStringDraw(text, 0, line);
 }
 
-
-void displayOLED(void* pvParameters) {
-    char text_buffer[16];
-    int16_t yaw = 0;
-
-    while(1) {
-        yaw = *(int32_t*) pvParameters;
-        sprintf(text_buffer, "Altitude: %d %%", altitude);
-        writeDisplay(text_buffer, 1);
-        taskDelayMS(1000/DISPLAY_RATE_HZ);
-    }
-}
+ss
