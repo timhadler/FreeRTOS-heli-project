@@ -13,12 +13,9 @@
 #include "inc/hw_types.h"
 #include "inc/hw_ints.h"
 
-#include "driverlib/adc.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/debug.h"
 #include "driverlib/gpio.h"
-#include "driverlib/pwm.h"
-#include "driverlib/systick.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
 #include "utils/ustdlib.h"

@@ -42,9 +42,6 @@
 #define PWM_FREQ_HZ 100
 #define PWM_START_DUTY 0
 
-#define MAIN 1
-#define TAIL 0
-
 
 // Struct declaration
 typedef struct Motor_S {
