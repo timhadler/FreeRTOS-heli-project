@@ -47,35 +47,3 @@ void pollButton(void* pvParameters) {
         taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
     }
 }
-
-
-void processYaw(void* pvParameters) {
-    while(1) {
-        if (pdPASS != xSemaphoreTake(xYawSemaphore, portMAX_DELAY)) {
-           while(1) {};
-        }
-
-        uint8_t pin = (*(uint8_t *) pvParameters);
-        static uint8_t current = 0;
-
-
-        current ^= pin;
-        GPIOPinWrite(LED_GPIO_BASE, pin, current);
-
-
-
-        // Do yaw stuff
-    }
-}
-
-
-void displayOLED(void* pvParameters) {
-    char text_buffer[16];
-
-
-    while(1) {
-        sprintf(text_buffer, "ADC AVG: %d", 25);
-        writeDisplay(text_buffer, 1);
-        taskDelayMS(1);
-    }
-}
