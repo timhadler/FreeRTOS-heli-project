@@ -105,7 +105,6 @@ void controller(void* pvParameters) {
     while(1) {
         yaw = getYaw();
         //mean = getAltitude();
-        xSemaphoreGive(xYawMutex); //release access to yaw variable
 
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
