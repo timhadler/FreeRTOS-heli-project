@@ -1,8 +1,6 @@
-/*  altitude.h - Reads the altitude using an ADC conversion and the average of a circular buffer. */
-
-/*  Contributers: Hassan Ali Alhujhoj, Abdullah Naeem and Daniel Page
-    Last modified: 1.6.2019
-    Based on ADCdemo1.c by P.J. Bones UCECE */
+/*  altitude.c - Reads the altitude using an ADC conversion and the average from a FreeRTOS Queue.
+    Contributers: Hassan Ali Alhujhoj, Abdullah Naeem and Tim Hadler
+    Last modified: 8.8.2020 */
 
 #ifndef ALTITUDE_H_
 #define ALTITUDE_H_
@@ -22,11 +20,17 @@ ADCIntHandler(void);
 void
 initADC (void);
 
-int32_t getAlt(void);
+/* Returns the mean height value (meanVal) in mV*/
+int32_t
+getMeanVal(void);
+
+/* Returns the altitude*/
+int32_t
+getAlt(void);
 
 /* A FreeRTOS task that calculates the mean altitude readings from the FreeRTOS queue and measures the altitude based on the mean ADC value. */
 void
-xProcessAltData(void* pvParameters);
+processAlt(void* pvParameters);
 
 void AltitudeTimerCallback(TimerHandle_t timer);
 

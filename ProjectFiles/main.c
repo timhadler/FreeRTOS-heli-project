@@ -41,7 +41,8 @@
 //******************************************************************
 
 int16_t yaw;
-extern int32_t meanVal;
+static int32_t meanVal;
+static int32_t altitude;
 uint16_t height = 0;
 
 
@@ -82,13 +83,17 @@ void displayOLED(void* pvParameters) {
     char text_buffer[16];
 
     while(1) {
+        // Display Height
+        sprintf(text_buffer, "Altitude: %d %%", altitude);
+        writeDisplay(text_buffer, LINE_1);
+
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d", yaw);
+        sprintf(text_buffer, "Mean: %d mV", meanVal);
         writeDisplay(text_buffer, LINE_2);
 
-        // Display Height
-        sprintf(text_buffer, "Height: %d", meanVal);
-        writeDisplay(text_buffer, LINE_1);
+        // Display yaw
+        sprintf(text_buffer, "Yaw: %d", yaw);
+        writeDisplay(text_buffer, LINE_3);
 
         // Display motot PWMs
         taskDelayMS(1000/DISPLAY_RATE_HZ);
@@ -102,8 +107,8 @@ void displayOLED(void* pvParameters) {
 void controller(void* pvParameters) {
     while(1) {
         yaw = getYaw();
-        //mean = getAltitude();
-
+        meanVal = getMeanVal();
+        altitude = getAlt();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
 }
@@ -117,7 +122,7 @@ void createTasks(void) {
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
     createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
-    createTask(xProcessAltData, "Alt", 300, (void *) NULL, 3, NULL);
+    createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
 }
 
 
