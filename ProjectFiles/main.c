@@ -63,7 +63,7 @@ uint16_t height = 0;
 //          My first thought is to create a task to trigger samples, or ustilize a freeRTOS timer counter if thats possible
 uint16_t getHeight(void) {
 
-    int8_t height = 0;
+    //int8_t height = 0;
 
     //static uint16_t landedAvg = 0;
     uint16_t buffAvg = 0;

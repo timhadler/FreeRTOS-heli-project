@@ -15,7 +15,8 @@
 #include "myFreeRTOS.h"
 
 //int16_t yaw = 6;
-
+extern int32_t altitude;
+extern int32_t meanVal;
 
 // Initialise the Orbit OLED display
 void initDisplay(void) {
@@ -44,7 +45,7 @@ void displayOLED(void* pvParameters) {
 
     while(1) {
         yaw = *(int32_t*) pvParameters;
-        sprintf(text_buffer, "mean: %d", yaw);
+        sprintf(text_buffer, "Altitude: %d %%", altitude);
         writeDisplay(text_buffer, 1);
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }

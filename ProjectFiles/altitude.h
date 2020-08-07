@@ -22,7 +22,7 @@ ADCIntHandler(void);
 void
 initADC (void);
 
-int32_t getAltitude(void);
+int32_t getAlt(void);
 
 /* A FreeRTOS task that calculates the mean altitude readings from the FreeRTOS queue and measures the altitude based on the mean ADC value. */
 void
