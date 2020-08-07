@@ -39,11 +39,24 @@
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
-#define PWM_START_FREQ 250
-#define PWM_START_DUTY 50
+#define PWM_FREQ_HZ 100
+#define PWM_START_DUTY 0
 
 #define MAIN 1
 #define TAIL 0
+
+
+// Struct declaration
+typedef struct Motor_S {
+    uint32_t freq;
+    uint8_t duty;
+
+    uint32_t base;
+    uint32_t gen;
+    uint32_t outnum;
+} motor_t;
+
+enum motorType {MOTOR_T=0, MOTOR_M};
 
 
 //*****************************************************************************
@@ -51,15 +64,7 @@
 //*****************************************************************************
 void initMotors(void);
 
-void setMotor(bool main, uint32_t freq, uint8_t duty);
+void setMotor(uint8_t main, uint8_t duty);
 
-
-
-
-/*typedef struct Motor_S {
-    uint32_t base;
-    uint32_t gen;
-    uint32_t outnum;
-};*/
 
 #endif /* MYMOTORS_H_ */
