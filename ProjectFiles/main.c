@@ -42,8 +42,6 @@
 //******************************************************************
 // Global Variables
 //******************************************************************
-// global for now
-char text_buffer[16];
 
 int16_t yaw;
 extern int32_t meanVal;
@@ -82,6 +80,24 @@ uint16_t getHeight(void) {
 }
 
 
+void displayOLED(void* pvParameters) {
+    char text_buffer[16];
+
+    while(1) {
+        // Display yaw
+        sprintf(text_buffer, "Yaw: %d", yaw);
+        writeDisplay(text_buffer, LINE_2);
+
+        // Display Height
+        sprintf(text_buffer, "Height: %d", meanVal);
+        writeDisplay(text_buffer, LINE_1);
+
+        // Display motot PWMs
+        taskDelayMS(1000/DISPLAY_RATE_HZ);
+    }
+}
+
+
 // Dunno what to call this yet
 // Will use getYaw and getHeight functions in here
 // Initiate PI controllers with semaphores
@@ -102,7 +118,7 @@ void createTasks(void) {
     createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
-    createTask(displayOLED, "display", 200, (void *) &meanVal, 3, NULL);
+    createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
     createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
     createTask(xProcessAltData, "Alt", 300, (void *) NULL, 3, NULL);
 }
@@ -140,6 +156,8 @@ void main(void) {
     initialize();
     createSemaphores();
     startFreeRTOS();
+
+    char text_buffer[16];
 
     // Should never get here if startFreeRTOS is not un-commented
     setMotor(1, 100, 44);
