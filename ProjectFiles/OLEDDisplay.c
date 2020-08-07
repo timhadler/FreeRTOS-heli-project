@@ -38,4 +38,3 @@ void writeDisplay(char text[16], uint8_t line) {
     OLEDStringDraw(text, 0, line);
 }
 
-ss
