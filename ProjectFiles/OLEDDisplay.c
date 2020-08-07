@@ -14,6 +14,8 @@
 #include "OLEDDisplay.h"
 #include "myFreeRTOS.h"
 
+//int16_t yaw = 6;
+
 
 // Initialise the Orbit OLED display
 void initDisplay(void) {
@@ -38,11 +40,12 @@ void writeDisplay(char text[16], uint8_t line) {
 
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-
+    int16_t yaw = 0;
 
     while(1) {
-        sprintf(text_buffer, "ADC AVG: %d", 25);
+        yaw = *(int16_t*) pvParameters;
+        sprintf(text_buffer, "Yaw: %d", yaw);
         writeDisplay(text_buffer, 1);
-        taskDelayMS(1);
+        taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }

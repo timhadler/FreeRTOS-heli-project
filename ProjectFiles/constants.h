@@ -25,6 +25,7 @@
 
 
 #define DISPLAY_RATE 60
+#define CONTROLLER_RATE_HZ 250
 #define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
 
 
