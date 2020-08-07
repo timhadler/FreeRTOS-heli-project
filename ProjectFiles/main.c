@@ -34,6 +34,7 @@
 #include "myMotors.h"
 #include "myYaw.h"
 #include "altitude.h"
+#include "controllers.h"
 
 
 //******************************************************************
@@ -41,7 +42,7 @@
 //******************************************************************
 
 int16_t yaw;
-extern int32_t meanVal;
+int32_t mean;
 uint16_t height = 0;
 
 
@@ -87,7 +88,7 @@ void displayOLED(void* pvParameters) {
         writeDisplay(text_buffer, LINE_2);
 
         // Display Height
-        sprintf(text_buffer, "Height: %d", meanVal);
+        sprintf(text_buffer, "Height: %d", mean);
         writeDisplay(text_buffer, LINE_1);
 
         // Display motot PWMs
@@ -100,9 +101,17 @@ void displayOLED(void* pvParameters) {
 // Will use getYaw and getHeight functions in here
 // Initiate PI controllers with semaphores
 void controller(void* pvParameters) {
+    int32_t yawErr = 0;
+    int32_t altErr = 0;
+
     while(1) {
         yaw = getYaw();
-        //mean = getAltitude();
+        mean = getAltitude();
+
+        yawErr = getYawErr(yaw);
+        altErr = getAltErr(mean);
+
+        updateControl(altErr, yawErr);
 
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
@@ -116,8 +125,9 @@ void createTasks(void) {
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
     createTask(xProcessAltData, "Alt", 300, (void *) NULL, 3, NULL);
+
+    createTask(controller, "Controller", 500, (void *) NULL, 2, NULL);
 }
 
 
