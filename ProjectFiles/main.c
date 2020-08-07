@@ -43,55 +43,26 @@
 
 int16_t yaw;
 int32_t mean;
-uint16_t height = 0;
+
+uint8_t altitude;
 
 
 //******************************************************************
 // Functions
 //******************************************************************
-
-
-//function to calculate current height as percentage
-//TODO: Figure out how to to calculate height as a percentage
-//      The value returned by getBuffAvg is fine, just need to convert it to height
-//1/08/20 - In current state, adc will not be working so will not be getting proper vals from getBuffer
-//          the adc sampling was og initiated by the sysTickIntHnadler, directly above
-//          however we cannot use the sysTickClk as freeRTOS does some funcky stuff with it
-//          My first thought is to create a task to trigger samples, or ustilize a freeRTOS timer counter if thats possible
-uint16_t getHeight(void) {
-
-    int8_t height = 0;
-
-    //static uint16_t landedAvg = 0;
-    uint16_t buffAvg = 0;
-
-/*    if (landedAvg == 0) {
-        landedAvg = getBufferAvg();
-        return landedAvg;
-    }*/
-
-    buffAvg = getBufferAvg();
-    height = MAX_HEIGHT/buffAvg * 1000;
-    //diff = (landedAvg - buffAvg)*100;// * 100;
-    //height = (int8_t) (diff / MAX_HEIGHT);
-
-    return buffAvg;
-}
-
-
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
 
     while(1) {
+        // Display Height
+        sprintf(text_buffer, "Altitude: %d %%", altitude);
+        writeDisplay(text_buffer, LINE_1);
+
         // Display yaw
         sprintf(text_buffer, "Yaw: %d", yaw);
         writeDisplay(text_buffer, LINE_2);
 
-        // Display Height
-        sprintf(text_buffer, "Height: %d", mean);
-        writeDisplay(text_buffer, LINE_1);
-
-        // Display motot PWMs
+        // Display motor PWMs
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }
@@ -106,13 +77,14 @@ void controller(void* pvParameters) {
 
     while(1) {
         yaw = getYaw();
-        mean = getAltitude();
+        altitude = getAlt();
 
-        yawErr = getYawErr(yaw);
-        altErr = getAltErr(mean);
+        //yawErr = getYawErr(yaw);
+        //altErr = getAltErr(mean);
 
         updateControl(altErr, yawErr);
 
+        //mean = getMeanVal();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
 }
@@ -125,9 +97,9 @@ void createTasks(void) {
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    createTask(xProcessAltData, "Alt", 300, (void *) NULL, 3, NULL);
 
-    createTask(controller, "Controller", 500, (void *) NULL, 2, NULL);
+    createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
+    createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
 }
 
 

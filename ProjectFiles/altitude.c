@@ -1,7 +1,6 @@
-/*  altitude.c - Reads the altitude using an ADC conversion and the average of a circular buffer.
-    Contributers: Hassan Ali Alhujhoj, Abdullah Naeem and Daniel Page
-    Last modified: 1.6.2019
-    Based on ADCdemo1.c by P.J. Bones UCECE */
+/*  altitude.c - Reads the altitude using an ADC conversion and the average from a FreeRTOS Queue.
+    Contributers: Hassan Ali Alhujhoj, Abdullah Naeem and Tim Hadler
+    Last modified: 8.8.2020 */
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -12,20 +11,19 @@
 #include "altitude.h"
 
 /* Constants */
-#define QUEUE_SIZE 25 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
+#define QUEUE_SIZE 10 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
 #define SAMPLE_RATE_HZ 100 // The sampling rate for altitude readings (well over the jitter of 4Hz)
-#define VOLTAGE_SENSOR_RANGE 800 // The voltage range for the height sensor [mV]
-#define QUEUE_ITEM_SIZE sizeof(uint32_t) //4 bytes
+#define VOLTAGE_SENSOR_RANGE 900 // The voltage range for the height sensor [mV]
+#define QUEUE_ITEM_SIZE sizeof(uint32_t) //4 bytes which is the size of each ACD sample
 
 /* Sets variables */
-int32_t altitude;
-int32_t meanVal;
+static uint8_t altitude;
+//static int32_t meanVal;
 static int32_t helicopter_landed_value;
 
 /* FreeRTOS variables*/
 static TimerHandle_t altitude_timer;
 static QueueHandle_t ADCQueue;
-static BaseType_t QueueADCReceive;
 
 
 /* The handler for the ADC conversion complete interrupt.
@@ -89,65 +87,37 @@ void initADC (void) {
 }
 
 
-int32_t getAltitude(void) {
-    return meanVal;
+uint8_t getAlt(void) {
+    return altitude;
 }
 
 
-/* TODO  MAKE THIS INTO A TASK Calculates
- * the average altitude reading from the circular buffer and sets the landed value*/
-void xProcessAltData(void* pvParm) {
-    int list[QUEUE_SIZE] = {0};
-    int i = 0;
-    int j = 0;
-    BaseType_t foo;
-
-    /*
-     * n = 0;
-    xQueueReceive(ADCQueue, &list[i], portMAX_DELAY);
-    n++;
-    if n == QUEUE_SIZE:
-        //avg
-
-
-
-     */
-
+/* Calculates the average mean  reading from the circular buffer and sets the landed value*/
+void processAlt(void* pvParm) {
+    int sum = 0;
+    int i;
+    int n = 0;
+    int temp = 0;
+    int32_t meanVal;
 
         while(1){
-            if (xTimerIsTimerActive(altitude_timer) == pdFALSE) {
-                foo = xTimerStart(altitude_timer, 0); // start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit. So, it will keep checking the status of the queue for ever.
+
+            xTimerStart(altitude_timer, portMAX_DELAY); // start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit. So, it will keep checking the status of the queue for ever.
+            xQueueReceive(ADCQueue, &temp, portMAX_DELAY);
+            IntMasterDisable();
+            sum = 0;
+            for (i = 0; i < QUEUE_SIZE; i++) {
+                sum = sum + temp;
+                meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
             }
-
-            QueueADCReceive = xQueueReceive(ADCQueue, &list[i], portMAX_DELAY);
-            if(QueueADCReceive == pdTRUE){
-                IntMasterDisable();
-                i = (i + 1) % QUEUE_SIZE;
-
-                if (i % 5 == 0) {
-                    int offset = ((((i / 5) - 1) * 5 + 25) % 25); //to offset to the stating index (e.g 0, 5, 10, 15, 20)
-                    int sum = 0;
-                    for (j = 0; j < 5; ++j) {
-                        sum += list[offset + j];
-                    }
-                    meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
-
-                    // ...
-                    //meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
-                altitude = ((100 * 2 * (helicopter_landed_value - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
-                }
-                IntMasterEnable();
-//
-//                if (n == QUEUE_SIZE - 1) {
-//                        meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
-//                    }
-                // Creates a delay so there are values in the buffer to use for the landed value
-    //            if (n == QUEUE_SIZE) {
-    //                helicopter_landed_value = meanVal;
-    //                n++;
-    //            } else if (n < QUEUE_SIZE) {
-    //                n++;
-    //            }
+            // Creates a delay so there are values in the buffer to use for the landed value
+            if (n == QUEUE_SIZE) {
+                helicopter_landed_value = meanVal;
+                n++;
+            } else if (n < QUEUE_SIZE) {
+                n++;
             }
+            altitude = ((100 * 2 * (helicopter_landed_value - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+            IntMasterEnable();
         }
 }

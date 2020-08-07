@@ -15,7 +15,8 @@
 #include "myFreeRTOS.h"
 
 //int16_t yaw = 6;
-
+extern int32_t altitude;
+extern int32_t meanVal;
 
 // Initialise the Orbit OLED display
 void initDisplay(void) {
