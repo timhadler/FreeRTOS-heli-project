@@ -45,5 +45,5 @@ void taskDelayMS(uint16_t delay_ms) {
 
 void createSemaphores() {
     xYawSemaphore = xSemaphoreCreateBinary();
-    xYawMutex = xSemaphoreCreateMutex();
+    //xYawMutex = xSemaphoreCreateMutex();
 }

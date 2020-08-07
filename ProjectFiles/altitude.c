@@ -102,6 +102,17 @@ void xProcessAltData(void* pvParm) {
     int j = 0;
     BaseType_t foo;
 
+    /*
+     * n = 0;
+    xQueueReceive(ADCQueue, &list[i], portMAX_DELAY);
+    n++;
+    if n == QUEUE_SIZE:
+        //avg
+
+
+
+     */
+
 
         while(1){
             if (xTimerIsTimerActive(altitude_timer) == pdFALSE) {

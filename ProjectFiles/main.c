@@ -47,6 +47,7 @@ int16_t yaw;
 extern int32_t meanVal;
 uint16_t height = 0;
 
+
 //******************************************************************
 // Functions
 //******************************************************************
@@ -159,8 +160,8 @@ void main(void) {
     char text_buffer[16];
 
     // Should never get here if startFreeRTOS is not un-commented
-    setMotor(1, 100, 44);
-    setMotor(0, 100, 37);
+    setMotor(MOTOR_M, 44);
+    setMotor(MOTOR_T, 37);
     while(1) {
         uint16_t avg = 5;
         sprintf(text_buffer, "ADC AVG: %d", avg);
