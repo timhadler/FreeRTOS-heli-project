@@ -8,6 +8,10 @@
 #define ALTITUDE_H_
 
 #include <stdint.h>
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#include "timers.h"
 
 /* The handler for the ADC conversion complete interrupt.
    Writes to the circular buffer */
@@ -18,8 +22,12 @@ ADCIntHandler(void);
 void
 initADC (void);
 
+int32_t getAltitude(void);
+
 /* A FreeRTOS task that calculates the mean altitude readings from the FreeRTOS queue and measures the altitude based on the mean ADC value. */
 void
-xProcessAltData(void* pvParm);
+xProcessAltData(void* pvParameters);
+
+void AltitudeTimerCallback(TimerHandle_t timer);
 
 #endif /* ALTITUDE_H_ */

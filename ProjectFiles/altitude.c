@@ -7,12 +7,9 @@
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
+#include "driverlib/interrupt.h"
 #include "driverlib/adc.h"
 #include "altitude.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "timers.h"
-#include "task.h"
 
 /* Constants */
 #define QUEUE_SIZE 25 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
@@ -22,7 +19,7 @@
 
 /* Sets variables */
 int32_t altitude;
-static int32_t meanVal;
+int32_t meanVal;
 static int32_t helicopter_landed_value;
 
 /* FreeRTOS variables*/
@@ -48,7 +45,7 @@ void ADCIntHandler(void) {
 }
 
 // Altitude Task function
-void AltitudeTimerCallback(TimerHandle_t parm){
+void AltitudeTimerCallback(TimerHandle_t timer){
     ADCProcessorTrigger(ADC0_BASE, 3); // Initiate a conversion
 }
 
@@ -91,6 +88,12 @@ void initADC (void) {
 
 }
 
+
+int32_t getAltitude(void) {
+    return meanVal;
+}
+
+
 /* TODO  MAKE THIS INTO A TASK Calculates
  * the average altitude reading from the circular buffer and sets the landed value*/
 void xProcessAltData(void* pvParm) {
@@ -107,6 +110,7 @@ void xProcessAltData(void* pvParm) {
 
             QueueADCReceive = xQueueReceive(ADCQueue, &list[i], portMAX_DELAY);
             if(QueueADCReceive == pdTRUE){
+                IntMasterDisable();
                 i = (i + 1) % QUEUE_SIZE;
 
                 if (i % 5 == 0) {
@@ -121,6 +125,7 @@ void xProcessAltData(void* pvParm) {
                     //meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
                 altitude = ((100 * 2 * (helicopter_landed_value - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
                 }
+                IntMasterEnable();
 //
 //                if (n == QUEUE_SIZE - 1) {
 //                        meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;

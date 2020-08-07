@@ -43,8 +43,8 @@ void displayOLED(void* pvParameters) {
     int16_t yaw = 0;
 
     while(1) {
-        yaw = *(int16_t*) pvParameters;
-        sprintf(text_buffer, "Yaw: %d", yaw);
+        yaw = *(int32_t*) pvParameters;
+        sprintf(text_buffer, "mean: %d", yaw);
         writeDisplay(text_buffer, 1);
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }

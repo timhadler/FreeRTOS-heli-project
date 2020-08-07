@@ -46,6 +46,7 @@
 char text_buffer[16];
 
 int16_t yaw;
+extern int32_t meanVal;
 uint16_t height = 0;
 
 //******************************************************************
@@ -87,6 +88,7 @@ uint16_t getHeight(void) {
 void controller(void* pvParameters) {
     while(1) {
         yaw = getYaw();
+        //mean = getAltitude();
         xSemaphoreGive(xYawMutex); //release access to yaw variable
 
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
@@ -100,8 +102,9 @@ void createTasks(void) {
     createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
-    createTask(displayOLED, "display", 200, (void *) &yaw, 3, NULL);
+    createTask(displayOLED, "display", 200, (void *) &meanVal, 3, NULL);
     createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
+    createTask(xProcessAltData, "Alt", 300, (void *) NULL, 3, NULL);
 }
 
 
