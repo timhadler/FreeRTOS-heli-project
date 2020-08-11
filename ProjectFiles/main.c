@@ -21,6 +21,8 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
+#include "inc/tm4c123gh6pm.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
@@ -49,6 +51,7 @@ int16_t targetAlt;
 int16_t targetYaw;
 
 uint8_t altitude;
+uint8_t pwm;
 
 
 //******************************************************************
@@ -56,25 +59,25 @@ uint8_t altitude;
 //******************************************************************
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-    int ti;
+    //int ti;
     while(1) {
         // Display Height
         sprintf(text_buffer, "Altitude: %d %%", altitude);
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d", yaw);
+        sprintf(text_buffer, "Yaw: %d %%", yaw);
         writeDisplay(text_buffer, LINE_2);
 
         sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
         writeDisplay(text_buffer, LINE_3);
 
-        ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN) == RIGHT_BUT_PIN);
+        //ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, LEFT_BUT_PIN));
 
-        sprintf(text_buffer, "Target Yaw: %d", ti);
+        sprintf(text_buffer, "Target Yaw: %d",targetYaw);
         writeDisplay(text_buffer, LINE_4);
 
-        // Display motor PWMs
+
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }
@@ -82,20 +85,19 @@ void displayOLED(void* pvParameters) {
 
 
 void controller(void* pvParameters) {
-    int32_t yawErr = 0;
-    int32_t altErr = 0;
 
     while(1) {
+
         yaw = getYaw();
         altitude = getAlt();
+        //pwm = getPWM();
+
 
         targetAlt = getTargetAlt();
         targetYaw = getTargetYaw();
 
-        //yawErr = getYawErr(yaw);
-        //altErr = getAltErr(mean);
-
-        updateControl(altErr, yawErr);
+        piMainUpdate(targetAlt);
+        piTailUpdate(targetYaw);
 
         //mean = getMeanVal();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
@@ -111,6 +113,7 @@ void createTasks(void) {
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
 
+    //createTask(updateControl, "PID controller", 200, (void*)NULL,2, NULL);
     createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
     createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
 }
@@ -121,8 +124,8 @@ void initialize(void) {
     // Set clock to 80MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
-    initADC();
     initButtons();
+    initADC();
     initDisplay();
     initBuffer();
     initMotors();
@@ -132,6 +135,20 @@ void initialize(void) {
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
+
+    //// BUTTONS...
+    GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);
+    GPIOPadConfigSet (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN, GPIO_STRENGTH_2MA,
+       GPIO_PIN_TYPE_STD_WPU);
+
+    //---Unlock PF0 for the right button:
+    GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;
+    GPIO_PORTF_CR_R |= GPIO_PIN_0; //PF0 unlocked
+    GPIO_PORTF_LOCK_R = GPIO_LOCK_M;
+    GPIOPinTypeGPIOInput (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN);
+    GPIOPadConfigSet (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN, GPIO_STRENGTH_2MA,
+       GPIO_PIN_TYPE_STD_WPU);
+    ////
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
@@ -150,13 +167,18 @@ void initialize(void) {
 void main(void) {
     initialize();
     createSemaphores();
+
+
     startFreeRTOS();
+
+
+    // Should never get here if startFreeRTOS is not un-commented
 
     char text_buffer[16];
 
-    // Should never get here if startFreeRTOS is not un-commented
     setMotor(MOTOR_M, 44);
     setMotor(MOTOR_T, 37);
+
     while(1) {
         uint16_t avg = 5;
         sprintf(text_buffer, "ADC AVG: %d", avg);

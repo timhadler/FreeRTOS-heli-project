@@ -43,6 +43,9 @@ void pollButton(void* pvParameters) {
         if (targetAlt > 100) {
             targetAlt = 100;
         }
+        if (targetAlt < 0) {
+            targetAlt = 0;
+        }
         if (targetYaw > 180) {
             targetYaw = -165;
         }

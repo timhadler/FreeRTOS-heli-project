@@ -22,6 +22,17 @@ motor_t tailMotor;
 uint32_t periodPWM;         // Period for the PWM
 
 
+
+
+uint8_t getPWM(void) {
+    uint8_t main_duty = mainMotor.duty;
+
+    setMotor(1, 45);
+
+
+    return main_duty;
+}
+
 void initMotors(void) {
     SysCtlPWMClockSet(PWM_CLOCK_DIVIDER);
 
@@ -86,13 +97,17 @@ void initMotors(void) {
 
 
 void setMotor(uint8_t main, uint8_t duty) {
-    motor_t motor;
+    motor_t *motor;
 
     if (main) {
-        motor = mainMotor;
+        motor = &mainMotor;
     } else {
-        motor = tailMotor;
+        motor = &tailMotor;
     }
 
-    PWMPulseWidthSet(motor.base, motor.outnum, periodPWM * duty / 100);
+    motor->duty = duty;
+
+    periodPWM = SysCtlClockGet() / PWM_DIVIDER / PWM_FREQ_HZ;
+
+    PWMPulseWidthSet(motor->base, motor->outnum, periodPWM * duty / 100);
 }

@@ -2,7 +2,7 @@
  * FreeRTOSConfig.h
  *
  *  Created on: 15/07/2020
- *      Author: andre
+ *      Author: Andreeeeee
  */
 
 #ifndef FREERTOSCONFIG_H_
@@ -27,7 +27,15 @@
 
 #define configUSE_TICK_HOOK 0
 
-#define configUSE_MUTEXES 1
+#define configUSE_TIMERS 1  // added this just to push
+
+#define configUSE_MUTEX 1
+
+#define configTIMER_TASK_STACK_DEPTH 128
+
+#define configTIMER_TASK_PRIORITY 4
+
+#define configTIMER_QUEUE_LENGTH 16
 
 #define INCLUDE_vTaskPrioritySet 0
 
@@ -41,7 +49,7 @@
 
 #define INCLUDE_vTaskDelay 1
 
-#define configUSE_16_BIT_TICKS 0 // not sure what this is
+#define configUSE_16_BIT_TICKS 0 // not sure what this is - This sets the data type for the FreeRTOS tick interupt counter, 1->uint16, 0->uint32
 
 #define configKERNEL_INTERRUPT_PRIORITY (7 << 5) // Lowest priority for RTOS periodic interrupts
 
