@@ -10,18 +10,30 @@
 #define CONTROLLERS_H_
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "driverlib/gpio.h"
+
+
+// Define ref signal base and pin
+#define REF_PERIPH SYSCTL_PERIPH_GPIOC
+#define REF_GPIO_BASE GPIO_PORTC_BASE
+#define REF_INT_PIN GPIO_INT_PIN_4
+#define REF_PIN GPIO_PIN_4
+
+
 
 void initControllers(void);
 
-double getAltErr(void);
+int16_t getAltErr(int16_t setAlt);
 
-double getYawErr(void);
+int16_t getYawErr(int16_t setAlt);
 
-void piMainUpdate(void);
+void piMainUpdate(int16_t setAlt);
 
-void piTailUpdate(void);
+void piTailUpdate(int16_t setYaw);
 
 
-
+void findReference(void);
 
 #endif /* CONTROLLERS_H_ */

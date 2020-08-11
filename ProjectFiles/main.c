@@ -21,6 +21,8 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
+#include "inc/tm4c123gh6pm.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
@@ -35,6 +37,7 @@
 #include "myYaw.h"
 #include "altitude.h"
 #include "controllers.h"
+#include "myButtons.h"
 
 
 //******************************************************************
@@ -44,6 +47,8 @@
 int16_t yaw;
 int32_t mean;
 
+int16_t targetAlt;
+int16_t targetYaw;
 
 uint8_t altitude;
 uint8_t pwm;
@@ -54,7 +59,7 @@ uint8_t pwm;
 //******************************************************************
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-
+    //int ti;
     while(1) {
         // Display Height
         sprintf(text_buffer, "Altitude: %d %%", altitude);
@@ -64,9 +69,13 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Yaw: %d %%", yaw);
         writeDisplay(text_buffer, LINE_2);
 
-        // Display motor PWMs
-        sprintf(text_buffer, "PWM: %d ", pwm);
+        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
         writeDisplay(text_buffer, LINE_3);
+
+        //ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, LEFT_BUT_PIN));
+
+        sprintf(text_buffer, "Target Yaw: %d",targetYaw);
+        writeDisplay(text_buffer, LINE_4);
 
 
         taskDelayMS(1000/DISPLAY_RATE_HZ);
@@ -74,23 +83,21 @@ void displayOLED(void* pvParameters) {
 }
 
 
-// Dunno what to call this yet
-// Will use getYaw and getHeight functions in here
-// Initiate PI controllers with semaphores
+
 void controller(void* pvParameters) {
 
     while(1) {
+
         yaw = getYaw();
         altitude = getAlt();
-        pwm = getPWM();
+        //pwm = getPWM();
 
 
-        //yawErr = getYawErr(yaw);
-        //altErr = getAltErr(mean);
+        targetAlt = getTargetAlt();
+        targetYaw = getTargetYaw();
 
-
-        piMainUpdate();
-        piTailUpdate();
+        piMainUpdate(targetAlt);
+        piTailUpdate(targetYaw);
 
         //mean = getMeanVal();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
@@ -117,8 +124,8 @@ void initialize(void) {
     // Set clock to 80MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
-    initADC();
     initButtons();
+    initADC();
     initDisplay();
     initBuffer();
     initMotors();
@@ -128,6 +135,23 @@ void initialize(void) {
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
+
+    //// BUTTONS...
+    GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);
+    GPIOPadConfigSet (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN, GPIO_STRENGTH_2MA,
+       GPIO_PIN_TYPE_STD_WPU);
+
+    //---Unlock PF0 for the right button:
+    GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;
+    GPIO_PORTF_CR_R |= GPIO_PIN_0; //PF0 unlocked
+    GPIO_PORTF_LOCK_R = GPIO_LOCK_M;
+    GPIOPinTypeGPIOInput (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN);
+    GPIOPadConfigSet (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN, GPIO_STRENGTH_2MA,
+       GPIO_PIN_TYPE_STD_WPU);
+    ////
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
 
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors

@@ -31,19 +31,3 @@ void blinkLED(void* pvParameters) {
 }
 
 
-void pollButton(void* pvParameters) {
-    //static uint8_t count = 0;
-    uint8_t current = 0;
-
-    // This code atm is just testing to make sure the task works properly, which it does
-    while (1) {
-        updateButtons();
-        current ^= LED_GREEN_PIN;
-        if (checkButton (UP) == PUSHED) {
-            //count++;
-            current ^= LED_GREEN_PIN;
-            GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, current);
-        }
-        taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
-    }
-}

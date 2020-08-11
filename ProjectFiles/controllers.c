@@ -5,6 +5,7 @@
  *      Author: tch118
  */
 
+#include <stdint.h>
 #include "controllers.h"
 #include "myMotors.h"
 #include "altitude.h"
@@ -15,34 +16,46 @@
 #define KP_T 1
 #define KI_T 0.18
 #define T_DELTA 0.01
-#define SETALT 20
+//#define SETALT 0
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
-#define SETYAW 2
+//#define SETYAW 0
 
 
-double getAltErr(void) {
-    return SETALT - getAlt();
+int16_t getAltErr(int16_t tAlt) {
+    return tAlt - getAlt();
 }
 
 
-double getYawErr(void) {
-    return SETYAW - getYaw();
+int16_t getYawErr(int16_t tYaw) {
+    return tYaw - getYaw();
 }
 
 
-void piMainUpdate(void) {
+void findReference(void) {
+    setMotor(MOTOR_M, 10);
+    setMotor(MOTOR_T, 50);
+
+    while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
+        continue;
+    }
+    setMotor(MOTOR_M, 0);
+    setMotor(MOTOR_T, 0);
+}
+
+
+void piMainUpdate(int16_t setAlt) {
     //uint8_t uMainDuty = 0;
     //uint8_t uTailDuty = 0;
 
     static double I;
     double P;
     double control;
-    double error_alt;
+    int16_t error_alt;
     double dI;
 
 
-    error_alt = getAltErr(); // Error between the set altitude and the actual altitude
+    error_alt = getAltErr(setAlt); // Error between the set altitude and the actual altitude
 
 
     P = KP_M*error_alt;
@@ -63,15 +76,15 @@ void piMainUpdate(void) {
 }
 
 
-void piTailUpdate(void) {
+void piTailUpdate(int16_t setYaw) {
 
     static double I;
     double P;
     double control;
-    double error_yaw;
+    int16_t error_yaw;
     double dI;
 
-    error_yaw = getYawErr(); // Error between the set altitude and the actual altitude
+    error_yaw = getYawErr(setYaw); // Error between the set altitude and the actual altitude
 
 
     P = KP_M*error_yaw;
@@ -88,6 +101,5 @@ void piTailUpdate(void) {
     } else {
         I += dI; // Accumulates the a history of the error in the integral
     }
-    setMotor(MOTOR_T, control);
-
+    setMotor(MOTOR_T, 37);
 }
