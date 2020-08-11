@@ -33,7 +33,9 @@ void initMotors(void) {
 
     //initialize all PWM, Main then tail
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
+    while (!SysCtlPeripheralReady(PWM_MAIN_PERIPH_PWM));
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
+    while (!SysCtlPeripheralReady(PWM_MAIN_PERIPH_GPIO));
 
     GPIOPinConfigure(PWM_MAIN_GPIO_CONFIG);
     GPIOPinTypePWM(PWM_MAIN_GPIO_BASE, PWM_MAIN_GPIO_PIN);
@@ -42,7 +44,9 @@ void initMotors(void) {
                     PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
+    while (!SysCtlPeripheralReady(PWM_TAIL_PERIPH_PWM));
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
+    while (!SysCtlPeripheralReady(PWM_TAIL_PERIPH_GPIO));
 
     GPIOPinConfigure(PWM_TAIL_GPIO_CONFIG);
     GPIOPinTypePWM(PWM_TAIL_GPIO_BASE, PWM_TAIL_GPIO_PIN);

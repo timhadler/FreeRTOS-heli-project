@@ -11,24 +11,29 @@
 #include "task.h"
 #include "timers.h"
 
+/* Sets variables */
+
+/* FreeRTOS variables*/
+static TimerHandle_t Alt_IN_Timer;
+static QueueHandle_t Alt_IN_Queue;
+static QueueHandle_t Alt_OUT_Queue;
+
 /* The handler for the ADC conversion complete interrupt.
    Writes to the circular buffer */
 void
 ADCIntHandler(void);
 
-/* Enables and configures ADC */
 void
 initADC (void);
 
-
-/* Returns the altitude*/
-uint8_t
+uint32_t
 getAlt(void);
 
 /* A FreeRTOS task that calculates the mean altitude readings from the FreeRTOS queue and measures the altitude based on the mean ADC value. */
 void
 processAlt(void* pvParameters);
 
-void AltitudeTimerCallback(TimerHandle_t timer);
+void
+AltitudeTimerCallback(TimerHandle_t timer);
 
 #endif /* ALTITUDE_H_ */

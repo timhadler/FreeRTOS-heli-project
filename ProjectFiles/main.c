@@ -41,25 +41,20 @@
 // Global Variables
 //******************************************************************
 
-int16_t yaw;
-int32_t mean;
-
-uint8_t altitude;
-
 
 //******************************************************************
 // Functions
 //******************************************************************
 void displayOLED(void* pvParameters) {
-    char text_buffer[16];
-
+    char text_buffer[15];
     while(1) {
         // Display Height
-        sprintf(text_buffer, "Altitude: %d %%", altitude);
+        snprintf(text_buffer, 15, "Altitude: %d%%", getAlt());
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d", yaw);
+        int32_t yaw = getYaw();
+        snprintf(text_buffer, 15, "Yaw: %d", yaw);
         writeDisplay(text_buffer, LINE_2);
 
         // Display motor PWMs
@@ -76,12 +71,8 @@ void controller(void* pvParameters) {
     int32_t altErr = 0;
 
     while(1) {
-        yaw = getYaw();
-        altitude = getAlt();
-
         //yawErr = getYawErr(yaw);
         //altErr = getAltErr(mean);
-
         updateControl(altErr, yawErr);
 
         //mean = getMeanVal();
@@ -94,12 +85,10 @@ void createTasks(void) {
     static uint8_t led = LED_RED_PIN;
 
     createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
-    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
-    createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
-    createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-
-    createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
-    createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
+    createTask(pollButton, "Button Poll", 128, (void *) NULL, 3, NULL);
+    createTask(displayOLED, "display", 128, (void *) NULL, 3, NULL);
+    // createTask(controller, "controller", 64, (void *) NULL, 2, NULL);
+    createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 3, NULL);
 }
 
 
@@ -112,8 +101,8 @@ void initialize(void) {
     initButtons();
     initDisplay();
     initBuffer();
-    initMotors();
-    initYaw();
+    // initMotors();
+    // initYaw();
     createTasks();
 
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output

@@ -11,19 +11,11 @@
 #include "altitude.h"
 
 /* Constants */
-#define QUEUE_SIZE 10 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
-#define SAMPLE_RATE_HZ 100 // The sampling rate for altitude readings (well over the jitter of 4Hz)
-#define VOLTAGE_SENSOR_RANGE 900 // The voltage range for the height sensor [mV]
-#define QUEUE_ITEM_SIZE sizeof(uint32_t) //4 bytes which is the size of each ACD sample
-
-/* Sets variables */
-static uint8_t altitude;
-//static int32_t meanVal;
-static int32_t helicopter_landed_value;
-
-/* FreeRTOS variables*/
-static TimerHandle_t altitude_timer;
-static QueueHandle_t ADCQueue;
+#define Alt_IN_QUEUE_SIZE 10                // The size of the queue containing the raw ADC values.
+#define Alt_OUT_QUEUE_SIZE 1                // The size of the queue containg the final altitude value.
+#define SAMPLE_RATE_HZ 100                  // The sampling rate for altitude readings (well over the jitter of 4Hz)
+#define VOLTAGE_SENSOR_RANGE 900            // The voltage range for the height sensor [mV]
+#define QUEUE_ITEM_SIZE sizeof(uint32_t)    //4 bytes which is the size of each ACD sample
 
 
 /* The handler for the ADC conversion complete interrupt.
@@ -36,23 +28,37 @@ void ADCIntHandler(void) {
     ADCSequenceDataGet(ADC0_BASE, 3, &sample);
     //
     // Place it in FreeRTOS Queue
-    xQueueSendFromISR(ADCQueue, &sample, NULL);
+    xQueueSendFromISR(Alt_IN_Queue, &sample, NULL);
 
     // Clean up, clearing the interrupt
     ADCIntClear(ADC0_BASE, 3);
 }
 
+
 // Altitude Task function
 void AltitudeTimerCallback(TimerHandle_t timer){
-    ADCProcessorTrigger(ADC0_BASE, 3); // Initiate a conversion
+    ADCProcessorTrigger(ADC0_BASE, 3);      // Initiate an ADC conversion
 }
+
 
 /* Enables and configures ADC */
 void initADC (void) {
-    /* create a timer that would run the ADCProsessorTrigger */
-    altitude_timer = xTimerCreate ("AltitudeTimer", pdMS_TO_TICKS(10), pdTRUE, NULL, AltitudeTimerCallback);
-    /* create a timer that would run the ADCProsessorTrigger */
-    ADCQueue = xQueueCreate(QUEUE_SIZE, QUEUE_ITEM_SIZE);
+    /* Create a timer that would run the ADCProsessorTrigger */
+    Alt_IN_Timer = xTimerCreate ("AltitudeTimer", pdMS_TO_TICKS(10), pdTRUE, NULL, AltitudeTimerCallback);
+    if(Alt_IN_Timer == NULL){
+        while(1);
+    }
+    /* Create a FreeRTOS queue for average mean of ADC readings */
+    Alt_IN_Queue = xQueueCreate(Alt_IN_QUEUE_SIZE, QUEUE_ITEM_SIZE);
+    if(Alt_IN_Queue == NULL){
+        while(1);
+    }
+
+    /* Create a FreeRTOS queue for final altitude value to be used by other source files */
+    Alt_OUT_Queue = xQueueCreate(Alt_OUT_QUEUE_SIZE, QUEUE_ITEM_SIZE);
+    if(Alt_OUT_Queue == NULL){
+        while(1);
+    }
 
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
@@ -83,41 +89,50 @@ void initADC (void) {
 
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, 3);
-
 }
 
-
-uint8_t getAlt(void) {
+uint32_t getAlt(void){
+    uint32_t altitude = 0;
+    xQueueReceive(Alt_OUT_Queue, &altitude, pdMS_TO_TICKS(10));
     return altitude;
 }
 
-
-/* Calculates the average mean  reading from the circular buffer and sets the landed value*/
-void processAlt(void* pvParm) {
+/* Calculates the average mean of ADC readings and altitude of the helicopter from a FreeRTOS queue*/
+void processAlt(void* pvParameter) {
     int sum = 0;
     int i;
     int n = 0;
     int temp = 0;
+    uint32_t altitude;
     int32_t meanVal;
+    int32_t altLandedValue;
 
-        while(1){
+    /* start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit.
+       So, it will keep checking the status of the queue for ever.*/
+    xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
-            xTimerStart(altitude_timer, portMAX_DELAY); // start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit. So, it will keep checking the status of the queue for ever.
-            xQueueReceive(ADCQueue, &temp, portMAX_DELAY);
-            IntMasterDisable();
+    while(1){
+        if(xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY)){
+
             sum = 0;
-            for (i = 0; i < QUEUE_SIZE; i++) {
+            for (i = 0; i < Alt_IN_QUEUE_SIZE; i++) {
                 sum = sum + temp;
-                meanVal = (2 * sum + QUEUE_SIZE) / 2 / QUEUE_SIZE;
             }
+
+            meanVal = (2 * sum + Alt_IN_QUEUE_SIZE) / 2 / Alt_IN_QUEUE_SIZE;
+
             // Creates a delay so there are values in the buffer to use for the landed value
-            if (n == QUEUE_SIZE) {
-                helicopter_landed_value = meanVal;
-                n++;
-            } else if (n < QUEUE_SIZE) {
-                n++;
+            if (n == Alt_IN_QUEUE_SIZE) {
+                    altLandedValue = meanVal;
+                    n++;
+            } else if (n < Alt_IN_QUEUE_SIZE) {
+                    n++;
             }
-            altitude = ((100 * 2 * (helicopter_landed_value - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
-            IntMasterEnable();
+
+            altitude = ((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+            if (!xQueueSend(Alt_OUT_Queue, &altitude, 0)) {
+                while(1);
+            }
         }
+    }
 }
