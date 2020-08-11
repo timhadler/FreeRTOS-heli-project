@@ -5,6 +5,7 @@
  *      Author: tch118
  */
 
+#include <stdint.h>
 #include "controllers.h"
 #include "myMotors.h"
 
@@ -31,3 +32,11 @@ void updateControl(int32_t altError, int32_t yawError) {
     setMotor(MOTOR_T, uTailDuty);
 }
 
+
+void findRefeference(void) {
+    setMotor(MOTOR_T, 0);
+
+    while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
+        continue;
+    }
+}

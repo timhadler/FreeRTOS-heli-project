@@ -35,12 +35,6 @@
 #define SWITCH_MODE_INT_PIN GPIO_INT_PIN_7
 #define SWITCH_MODE_PIN GPIO_PIN_7
 
-// Define ref signal base and pin
-#define REF_PERIPH SYSCTL_PERIPH_GPIOC
-#define REF_GPIO_BASE GPIO_PORTC_BASE
-#define REF_INT_PIN GPIO_INT_PIN_4
-#define REF_PIN GPIO_PIN_4
-
 
 // LED constants
 #define LED_GPIO_BASE GPIO_PORTF_BASE

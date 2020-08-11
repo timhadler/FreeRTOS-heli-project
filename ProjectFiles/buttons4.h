@@ -36,12 +36,12 @@ enum butStates {RELEASED = 0, PUSHED, NO_CHANGE};
 #define LEFT_BUT_PERIPH  SYSCTL_PERIPH_GPIOF
 #define LEFT_BUT_PORT_BASE  GPIO_PORTF_BASE
 #define LEFT_BUT_PIN  GPIO_PIN_4
-#define LEFT_BUT_NORMAL  true
+#define LEFT_BUT_NORMAL  false
 // RIGHT button
 #define RIGHT_BUT_PERIPH  SYSCTL_PERIPH_GPIOF
 #define RIGHT_BUT_PORT_BASE  GPIO_PORTF_BASE
 #define RIGHT_BUT_PIN  GPIO_PIN_0
-#define RIGHT_BUT_NORMAL  true
+#define RIGHT_BUT_NORMAL  false
 
 #define NUM_BUT_POLLS 3
 // Debounce algorithm: A state machine is associated with each button.

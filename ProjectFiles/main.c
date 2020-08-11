@@ -35,6 +35,7 @@
 #include "myYaw.h"
 #include "altitude.h"
 #include "controllers.h"
+#include "myButtons.h"
 
 
 //******************************************************************
@@ -44,6 +45,9 @@
 int16_t yaw;
 int32_t mean;
 
+int16_t targetAlt;
+int16_t targetYaw;
+
 uint8_t altitude;
 
 
@@ -52,7 +56,7 @@ uint8_t altitude;
 //******************************************************************
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-
+    int ti;
     while(1) {
         // Display Height
         sprintf(text_buffer, "Altitude: %d %%", altitude);
@@ -62,15 +66,21 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Yaw: %d", yaw);
         writeDisplay(text_buffer, LINE_2);
 
+        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
+        writeDisplay(text_buffer, LINE_3);
+
+        ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN) == RIGHT_BUT_PIN);
+
+        sprintf(text_buffer, "Target Yaw: %d", ti);
+        writeDisplay(text_buffer, LINE_4);
+
         // Display motor PWMs
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }
 
 
-// Dunno what to call this yet
-// Will use getYaw and getHeight functions in here
-// Initiate PI controllers with semaphores
+
 void controller(void* pvParameters) {
     int32_t yawErr = 0;
     int32_t altErr = 0;
@@ -78,6 +88,9 @@ void controller(void* pvParameters) {
     while(1) {
         yaw = getYaw();
         altitude = getAlt();
+
+        targetAlt = getTargetAlt();
+        targetYaw = getTargetYaw();
 
         //yawErr = getYawErr(yaw);
         //altErr = getAltErr(mean);
@@ -119,6 +132,9 @@ void initialize(void) {
     // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
 
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
