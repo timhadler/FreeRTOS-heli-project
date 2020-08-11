@@ -10,6 +10,7 @@
 #include "driverlib/adc.h"
 #include "altitude.h"
 
+
 /* Constants */
 #define QUEUE_SIZE 10 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
 #define SAMPLE_RATE_HZ 100 // The sampling rate for altitude readings (well over the jitter of 4Hz)
@@ -101,8 +102,12 @@ void processAlt(void* pvParm) {
     int32_t meanVal;
 
         while(1){
+            /* start the timer (AltitudeTimer) and
+            check if the Timer Queue is full with any time limit.
+            So, it will keep checking the status of the queue for ever.
+            */
 
-            xTimerStart(altitude_timer, portMAX_DELAY); // start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit. So, it will keep checking the status of the queue for ever.
+            xTimerStart(altitude_timer, portMAX_DELAY);
             xQueueReceive(ADCQueue, &temp, portMAX_DELAY);
             IntMasterDisable();
             sum = 0;

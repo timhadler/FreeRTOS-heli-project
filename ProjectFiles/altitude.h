@@ -11,6 +11,7 @@
 #include "task.h"
 #include "timers.h"
 
+
 /* The handler for the ADC conversion complete interrupt.
    Writes to the circular buffer */
 void
@@ -29,6 +30,7 @@ getAlt(void);
 void
 processAlt(void* pvParameters);
 
-void AltitudeTimerCallback(TimerHandle_t timer);
+void
+AltitudeTimerCallback(TimerHandle_t timer);
 
 #endif /* ALTITUDE_H_ */
