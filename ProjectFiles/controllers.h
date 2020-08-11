@@ -2,7 +2,8 @@
  * controllers.h
  *
  *  Created on: 7/08/2020
- *      Author: tch118
+ *      Author: tch118,
+ *
  */
 
 #ifndef CONTROLLERS_H_
@@ -12,11 +13,14 @@
 
 void initControllers(void);
 
-int32_t getAltErr(int32_t cMean);
+double getAltErr(void);
 
-int32_t getYawErr(int16_t cYaw);
+double getYawErr(void);
 
-void updateControl(int32_t altError, int32_t yawError);
+void piMainUpdate(void);
+
+void piTailUpdate(void);
+
 
 
 

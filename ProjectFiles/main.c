@@ -44,7 +44,9 @@
 int16_t yaw;
 int32_t mean;
 
+
 uint8_t altitude;
+uint8_t pwm;
 
 
 //******************************************************************
@@ -59,10 +61,14 @@ void displayOLED(void* pvParameters) {
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d", yaw);
+        sprintf(text_buffer, "Yaw: %d %%", yaw);
         writeDisplay(text_buffer, LINE_2);
 
         // Display motor PWMs
+        sprintf(text_buffer, "PWM: %d ", pwm);
+        writeDisplay(text_buffer, LINE_3);
+
+
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }
@@ -72,17 +78,19 @@ void displayOLED(void* pvParameters) {
 // Will use getYaw and getHeight functions in here
 // Initiate PI controllers with semaphores
 void controller(void* pvParameters) {
-    int32_t yawErr = 0;
-    int32_t altErr = 0;
 
     while(1) {
         yaw = getYaw();
         altitude = getAlt();
+        pwm = getPWM();
+
 
         //yawErr = getYawErr(yaw);
         //altErr = getAltErr(mean);
 
-        updateControl(altErr, yawErr);
+
+        piMainUpdate();
+        piTailUpdate();
 
         //mean = getMeanVal();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
@@ -98,6 +106,7 @@ void createTasks(void) {
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
 
+    //createTask(updateControl, "PID controller", 200, (void*)NULL,2, NULL);
     createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
     createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
 }
@@ -134,13 +143,18 @@ void initialize(void) {
 void main(void) {
     initialize();
     createSemaphores();
+
+
     startFreeRTOS();
+
+
+    // Should never get here if startFreeRTOS is not un-commented
 
     char text_buffer[16];
 
-    // Should never get here if startFreeRTOS is not un-commented
     setMotor(MOTOR_M, 44);
     setMotor(MOTOR_T, 37);
+
     while(1) {
         uint16_t avg = 5;
         sprintf(text_buffer, "ADC AVG: %d", avg);
