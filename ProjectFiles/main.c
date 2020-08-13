@@ -32,7 +32,6 @@
 #include "OLEDDisplay.h"
 #include "constants.h"
 #include "buffer.h"
-#include "myTasks.h"
 #include "myFreeRTOS.h"
 #include "myMotors.h"
 #include "myYaw.h"
@@ -44,9 +43,6 @@
 //******************************************************************
 // Global Variables
 //******************************************************************
-
-static int16_t targetAlt;
-static int16_t targetYaw;
 
 
 //******************************************************************
@@ -63,10 +59,10 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Yaw: %d deg", getYaw());
         writeDisplay(text_buffer, LINE_2);
 
-        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
+        sprintf(text_buffer, "Target Alt: %d%%", getTargetAlt());
         writeDisplay(text_buffer, LINE_3);
 
-        sprintf(text_buffer, "Target Yaw: %ddeg",targetYaw);
+        sprintf(text_buffer, "Target Yaw: %ddeg",getTargetYaw());
         writeDisplay(text_buffer, LINE_4);
 
         taskDelayMS(1000/DISPLAY_RATE_HZ);
@@ -75,14 +71,10 @@ void displayOLED(void* pvParameters) {
 
 
 void controller(void* pvParameters) {
-    findReference();
-
     while(1) {
-        targetAlt = getTargetAlt();
-        targetYaw = getTargetYaw();
 
-        piMainUpdate(targetAlt);
-        piTailUpdate(targetYaw);
+        piMainUpdate(getTargetAlt());
+        piTailUpdate(getTargetYaw());
 
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
@@ -142,17 +134,4 @@ void main(void) {
     initialize();
     createSemaphores();
     startFreeRTOS();
-
-    // Should never get here if startFreeRTOS is not un-commented
-
-    char text_buffer[16];
-
-    setMotor(MOTOR_M, 44);
-    setMotor(MOTOR_T, 37);
-
-    while(1) {
-        uint16_t avg = 5;
-        sprintf(text_buffer, "ADC AVG: %d", avg);
-        writeDisplay(text_buffer, LINE_2);
-    }
 }
