@@ -43,4 +43,11 @@
 #define LED_GREEN_PIN GPIO_PIN_3
 
 
+// For unlcoking rght button
+#define GPIO_PORTF_LOCK_R       (*((volatile uint32_t *)0x40025520))
+#define GPIO_PORTF_CR_R         (*((volatile uint32_t *)0x40025524))
+#define GPIO_LOCK_KEY           0x4C4F434B  // Unlocks the GPIO_CR register
+#define GPIO_LOCK_M             0xFFFFFFFF  // GPIO Lock
+
+
 #endif /* CONSTANTS_H_ */

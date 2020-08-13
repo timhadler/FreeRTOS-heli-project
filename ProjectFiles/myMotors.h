@@ -14,8 +14,8 @@
 //*****************************************************************************
 // Constants
 //*****************************************************************************
-#define PWM_CLOCK_DIVIDER SYSCTL_PWMDIV_8
-#define PWM_DIVIDER 8
+#define PWM_CLOCK_DIVIDER SYSCTL_PWMDIV_16
+#define PWM_DIVIDER 16
 
 //  PWM Hardware Details M0PWM7 (gen 3)
 //  ---Main Rotor PWM: PC5, J4-05
@@ -40,14 +40,12 @@
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
 #define PWM_FREQ_HZ 100
-#define PWM_START_DUTY 0
+#define PWM_START_DUTY 5
 
 
 // Struct declaration
 typedef struct Motor_S {
-    uint32_t freq;
     uint8_t duty;
-
     uint32_t base;
     uint32_t gen;
     uint32_t outnum;
@@ -60,6 +58,8 @@ enum motorType {MOTOR_T=0, MOTOR_M};
 // Funtion declarations
 //*****************************************************************************
 void initMotors(void);
+
+uint8_t getPWM(void);
 
 void setMotor(uint8_t main, uint8_t duty);
 

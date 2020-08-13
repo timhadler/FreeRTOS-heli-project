@@ -10,6 +10,7 @@
 #include "driverlib/adc.h"
 #include "altitude.h"
 
+
 /* Constants */
 #define Alt_IN_QUEUE_SIZE 10                // The size of the queue containing the raw ADC values.
 #define Alt_OUT_QUEUE_SIZE 1                // The size of the queue containg the final altitude value.

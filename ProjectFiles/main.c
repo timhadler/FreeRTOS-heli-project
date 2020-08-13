@@ -21,7 +21,8 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
-#include "inc/tm4c123gh6pm.h"
+//#include "inc/tm4c123gh6pm.h"
+#include "driverlib/pwm.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -44,10 +45,8 @@
 // Global Variables
 //******************************************************************
 
-int32_t mean;
-int16_t targetAlt;
-int16_t targetYaw;
-uint8_t pwm;
+static int16_t targetAlt;
+static int16_t targetYaw;
 
 
 //******************************************************************
@@ -70,13 +69,13 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Target Yaw: %ddeg",targetYaw);
         writeDisplay(text_buffer, LINE_4);
 
-
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
 }
 
 
 void controller(void* pvParameters) {
+    findReference();
 
     while(1) {
         targetAlt = getTargetAlt();
@@ -91,7 +90,6 @@ void controller(void* pvParameters) {
 
 
 void createTasks(void) {
-    static uint8_t led = LED_RED_PIN;
     createTask(pollButton, "Button Poll", 256, (void *) NULL, 3, NULL);
     createTask(displayOLED, "display", 256, (void *) NULL, 3, NULL);
     createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
@@ -112,14 +110,11 @@ void initialize(void) {
     initYaw();
     createTasks();
 
-    // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
-
     //// BUTTONS...
     GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);
     GPIOPadConfigSet (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN, GPIO_STRENGTH_2MA,
        GPIO_PIN_TYPE_STD_WPU);
+
 
     //---Unlock PF0 for the right button:
     GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;
@@ -129,6 +124,7 @@ void initialize(void) {
     GPIOPadConfigSet (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN, GPIO_STRENGTH_2MA,
        GPIO_PIN_TYPE_STD_WPU);
     ////
+
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));

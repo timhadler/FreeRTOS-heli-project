@@ -25,12 +25,12 @@ uint32_t periodPWM;         // Period for the PWM
 
 
 uint8_t getPWM(void) {
-    uint8_t main_duty = mainMotor.duty;
+    uint8_t duty = tailMotor.duty;
 
-    setMotor(1, 45);
+    //setMotor(1, 45);
 
 
-    return main_duty;
+    return duty;
 }
 
 void initMotors(void) {
@@ -44,7 +44,10 @@ void initMotors(void) {
 
     //initialize all PWM, Main then tail
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
+    while (!SysCtlPeripheralReady(PWM_MAIN_PERIPH_PWM));
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
+    while (!SysCtlPeripheralReady(PWM_MAIN_PERIPH_GPIO));
+
 
     GPIOPinConfigure(PWM_MAIN_GPIO_CONFIG);
     GPIOPinTypePWM(PWM_MAIN_GPIO_BASE, PWM_MAIN_GPIO_PIN);
@@ -53,7 +56,9 @@ void initMotors(void) {
                     PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
+    while (!SysCtlPeripheralReady(PWM_TAIL_PERIPH_PWM));
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
+    while (!SysCtlPeripheralReady(PWM_TAIL_PERIPH_GPIO));
 
     GPIOPinConfigure(PWM_TAIL_GPIO_CONFIG);
     GPIOPinTypePWM(PWM_TAIL_GPIO_BASE, PWM_TAIL_GPIO_PIN);
@@ -63,7 +68,13 @@ void initMotors(void) {
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
 
+    // Disable the output.  Repeat this call with 'true' to turn O/P on.
+    PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, false);
+
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
+
+    // Disable the output.  Repeat this call with 'true' to turn O/P on.
+    PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
 
     // Initialisation is complete, so turn on the output.
     PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, true);
@@ -77,16 +88,17 @@ void initMotors(void) {
 
     // Setup motor structs
     mainMotor.duty = PWM_START_DUTY;
-    mainMotor.freq = PWM_FREQ_HZ;
     mainMotor.base = PWM_MAIN_BASE;
     mainMotor.gen = PWM_MAIN_GEN;
     mainMotor.outnum = PWM_MAIN_OUTNUM;
 
     tailMotor.duty = PWM_START_DUTY;
-    tailMotor.freq = PWM_FREQ_HZ;
     tailMotor.base = PWM_TAIL_BASE;
     tailMotor.gen = PWM_TAIL_GEN;
     tailMotor.outnum = PWM_TAIL_OUTNUM;
+
+    setMotor(MOTOR_M, PWM_START_DUTY);
+    setMotor(MOTOR_T, PWM_START_DUTY);
 }
 
 
@@ -101,7 +113,7 @@ void setMotor(uint8_t main, uint8_t duty) {
 
     motor->duty = duty;
 
-    periodPWM = SysCtlClockGet() / PWM_DIVIDER / PWM_FREQ_HZ;
+    //periodPWM = SysCtlClockGet() / PWM_DIVIDER / PWM_FREQ_HZ;
 
     PWMPulseWidthSet(motor->base, motor->outnum, periodPWM * duty / 100);
 }
