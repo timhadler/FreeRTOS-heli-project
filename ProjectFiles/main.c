@@ -82,6 +82,8 @@ void displayOLED(void* pvParameters) {
 
 
 void controller(void* pvParameters) {
+    findReference();
+
     while(1) {
         yaw = getYaw();
         altitude = getAlt();
@@ -141,6 +143,9 @@ void initialize(void) {
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
+    GPIOPinTypeGPIOInput (GPIO_PORTC_BASE, REF_PIN);
+    GPIOPadConfigSet (GPIO_PORTC_BASE, REF_PIN, GPIO_STRENGTH_2MA,
+       GPIO_PIN_TYPE_STD_WPU);
 
     IntMasterEnable();
 }
