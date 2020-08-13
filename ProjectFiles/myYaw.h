@@ -11,6 +11,10 @@
 #include "driverlib/gpio.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#include "timers.h"
 
 // define Yaw gpio base and pins
 #define CH_A   GPIO_PIN_0 // CHannel A and B for sensing yaw
@@ -19,16 +23,21 @@
 #define YAW_GPIO_BASE GPIO_PORTB_BASE
 #define YAW_CHA_INT_PIN GPIO_INT_PIN_0
 #define YAW_CHB_INT_PIN GPIO_INT_PIN_1
-
 #define DISK_INTERRUPTS 448 // The number of readings in the slotted disk (4 * (112 slots) in a rev)
 
+/* Sets variables */
 
-void initYaw(void);
+/* FreeRTOS variables*/
+static QueueHandle_t YAW_Queue;
+static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-void YawIntHandler(void);
+void
+initYaw(void);
 
-int16_t getYaw(void);
+int32_t
+getYaw(void);
 
-void processYaw(void* pvParameters);
+void
+YawIntHandler(void);
 
 #endif /* MYYAW_H_ */

@@ -11,9 +11,9 @@
 #include "altitude.h"
 #include "myYaw.h"
 
-#define KP_M 1
+#define KP_M 10
 #define KI_M 0.18
-#define KP_T 1
+#define KP_T 10
 #define KI_T 0.18
 #define T_DELTA 0.01
 //#define SETALT 0

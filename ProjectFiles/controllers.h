@@ -23,17 +23,22 @@
 
 
 
-void initControllers(void);
+void
+initControllers(void);
 
-int16_t getAltErr(int16_t setAlt);
+int16_t
+getAltErr(int16_t setAlt);
 
-int16_t getYawErr(int16_t setAlt);
+int16_t
+getYawErr(int16_t setAlt);
 
-void piMainUpdate(int16_t setAlt);
+void
+piMainUpdate(int16_t setAlt);
 
-void piTailUpdate(int16_t setYaw);
+void
+piTailUpdate(int16_t setYaw);
 
-
-void findReference(void);
+void
+findReference(void);
 
 #endif /* CONTROLLERS_H_ */

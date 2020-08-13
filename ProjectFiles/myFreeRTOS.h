@@ -30,10 +30,6 @@ ISR.
 #include "task.h"
 
 
-SemaphoreHandle_t xYawSemaphore;
-SemaphoreHandle_t xYawMutex;
-
-
 // creates a task with FreeRTOS
 // function - function handle for task
 // taskName - name used only for debugging purposes,

@@ -44,13 +44,9 @@
 // Global Variables
 //******************************************************************
 
-int16_t yaw;
 int32_t mean;
-
 int16_t targetAlt;
 int16_t targetYaw;
-
-uint8_t altitude;
 uint8_t pwm;
 
 
@@ -59,22 +55,19 @@ uint8_t pwm;
 //******************************************************************
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-    //int ti;
     while(1) {
         // Display Height
-        sprintf(text_buffer, "Altitude: %d %%", altitude);
+        sprintf(text_buffer, "Altitude: %d%%", getAlt());
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d %%", yaw);
+        sprintf(text_buffer, "Yaw: %d deg", getYaw());
         writeDisplay(text_buffer, LINE_2);
 
         sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
         writeDisplay(text_buffer, LINE_3);
 
-        //ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, LEFT_BUT_PIN));
-
-        sprintf(text_buffer, "Target Yaw: %d",targetYaw);
+        sprintf(text_buffer, "Target Yaw: %ddeg",targetYaw);
         writeDisplay(text_buffer, LINE_4);
 
 
@@ -83,23 +76,15 @@ void displayOLED(void* pvParameters) {
 }
 
 
-
 void controller(void* pvParameters) {
 
     while(1) {
-
-        yaw = getYaw();
-        altitude = getAlt();
-        //pwm = getPWM();
-
-
         targetAlt = getTargetAlt();
         targetYaw = getTargetYaw();
 
         piMainUpdate(targetAlt);
         piTailUpdate(targetYaw);
 
-        //mean = getMeanVal();
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
 }
@@ -107,15 +92,10 @@ void controller(void* pvParameters) {
 
 void createTasks(void) {
     static uint8_t led = LED_RED_PIN;
-
-    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
-    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
-    createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
-    createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-
-    //createTask(updateControl, "PID controller", 200, (void*)NULL,2, NULL);
-    createTask(controller, "controller", 50, (void *) NULL, 2, NULL);
-    createTask(processAlt, "Altitude Calc", 200, (void *) NULL, 3, NULL);
+    createTask(pollButton, "Button Poll", 256, (void *) NULL, 3, NULL);
+    createTask(displayOLED, "display", 256, (void *) NULL, 3, NULL);
+    createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
+    createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
 }
 
 
@@ -153,8 +133,6 @@ void initialize(void) {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
 
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
     GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
@@ -167,10 +145,7 @@ void initialize(void) {
 void main(void) {
     initialize();
     createSemaphores();
-
-
     startFreeRTOS();
-
 
     // Should never get here if startFreeRTOS is not un-commented
 
