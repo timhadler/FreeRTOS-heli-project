@@ -21,7 +21,8 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
-#include "inc/tm4c123gh6pm.h"
+//#include "inc/tm4c123gh6pm.h"
+#include "driverlib/pwm.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -59,24 +60,20 @@ uint8_t pwm;
 //******************************************************************
 void displayOLED(void* pvParameters) {
     char text_buffer[16];
-    //int ti;
     while(1) {
         // Display Height
         sprintf(text_buffer, "Altitude: %d %%", altitude);
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d %%", yaw);
+        sprintf(text_buffer, "Yaw: %d", yaw);
         writeDisplay(text_buffer, LINE_2);
 
         sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
         writeDisplay(text_buffer, LINE_3);
 
-        //ti = (GPIOPinRead (RIGHT_BUT_PORT_BASE, LEFT_BUT_PIN));
-
-        sprintf(text_buffer, "Target Yaw: %d",targetYaw);
+        sprintf(text_buffer, "Target Yaw: %d", targetYaw);
         writeDisplay(text_buffer, LINE_4);
-
 
         taskDelayMS(1000/DISPLAY_RATE_HZ);
     }
@@ -85,13 +82,10 @@ void displayOLED(void* pvParameters) {
 
 
 void controller(void* pvParameters) {
-
     while(1) {
-
         yaw = getYaw();
         altitude = getAlt();
-        //pwm = getPWM();
-
+        pwm = getPWM();
 
         targetAlt = getTargetAlt();
         targetYaw = getTargetYaw();
@@ -106,9 +100,6 @@ void controller(void* pvParameters) {
 
 
 void createTasks(void) {
-    static uint8_t led = LED_RED_PIN;
-
-    createTask(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 1, NULL);
     createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
     createTask(processYaw, "Yaw stuff", 200, (void *) NULL, 4, NULL);
     createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
@@ -132,14 +123,11 @@ void initialize(void) {
     initYaw();
     createTasks();
 
-    // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
-
     //// BUTTONS...
     GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);
     GPIOPadConfigSet (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN, GPIO_STRENGTH_2MA,
        GPIO_PIN_TYPE_STD_WPU);
+
 
     //---Unlock PF0 for the right button:
     GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;
@@ -150,15 +138,9 @@ void initialize(void) {
        GPIO_PIN_TYPE_STD_WPU);
     ////
 
+
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
-
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
 
     IntMasterEnable();
 }
@@ -168,9 +150,7 @@ void main(void) {
     initialize();
     createSemaphores();
 
-
     startFreeRTOS();
-
 
     // Should never get here if startFreeRTOS is not un-commented
 
