@@ -21,26 +21,31 @@
 #define REF_INT_PIN GPIO_INT_PIN_4
 #define REF_PIN GPIO_PIN_4
 
-#define KP_M 1
+#define KP_M 10
 #define KI_M 0.18
-#define KP_T 1
+#define KP_T 10
 #define KI_T 0.18
 #define T_DELTA 0.01
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
 
 
-void initControllers(void);
+void
+initControllers(void);
 
-int16_t getAltErr(int16_t setAlt);
+int16_t
+getAltErr(int16_t setAlt);
 
-int16_t getYawErr(int16_t setAlt);
+int16_t
+getYawErr(int16_t setAlt);
 
-void piMainUpdate(int16_t setAlt);
+void
+piMainUpdate(int16_t setAlt);
 
-void piTailUpdate(int16_t setYaw);
+void
+piTailUpdate(int16_t setYaw);
 
-
-void findReference(void);
+void
+findReference(void);
 
 #endif /* CONTROLLERS_H_ */

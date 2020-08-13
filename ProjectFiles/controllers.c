@@ -23,6 +23,7 @@ int16_t getYawErr(int16_t tYaw) {
 
 
 void findReference(void) {
+
     setMotor(MOTOR_M, 10);
     setMotor(MOTOR_T, 20);
 

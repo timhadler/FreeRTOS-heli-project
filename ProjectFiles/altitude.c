@@ -18,20 +18,30 @@
 #define VOLTAGE_SENSOR_RANGE 900            // The voltage range for the height sensor [mV]
 #define QUEUE_ITEM_SIZE sizeof(uint32_t)    //4 bytes which is the size of each ACD sample
 
+/* Sets variables */
+static uint32_t altitude = 0;
+/* FreeRTOS variables*/
+static TimerHandle_t Alt_IN_Timer;
+static QueueHandle_t Alt_IN_Queue;
+static BaseType_t xHigherPriorityTaskWoken;
 
 /* The handler for the ADC conversion complete interrupt.
    Writes to the circular buffer */
 void ADCIntHandler(void) {
     uint32_t sample;
-    //
     // Get the single sample from ADC0.  ADC_BASE is defined in
     // inc/hw_memmap.h
     ADCSequenceDataGet(ADC0_BASE, 3, &sample);
     //
     // Place it in FreeRTOS Queue
-    xQueueSendFromISR(Alt_IN_Queue, &sample, NULL);
+    xQueueSendFromISR(Alt_IN_Queue, &sample, &xHigherPriorityTaskWoken);
 
-    // Clean up, clearing the interrupt
+    if(xHigherPriorityTaskWoken)
+      {
+          /* Actual macro used here is port specific. */
+          taskYIELD();
+      }    // Clean up, clearing the interrupt
+
     ADCIntClear(ADC0_BASE, 3);
 }
 
@@ -52,12 +62,6 @@ void initADC (void) {
     /* Create a FreeRTOS queue for average mean of ADC readings */
     Alt_IN_Queue = xQueueCreate(Alt_IN_QUEUE_SIZE, QUEUE_ITEM_SIZE);
     if(Alt_IN_Queue == NULL){
-        while(1);
-    }
-
-    /* Create a FreeRTOS queue for final altitude value to be used by other source files */
-    Alt_OUT_Queue = xQueueCreate(Alt_OUT_QUEUE_SIZE, QUEUE_ITEM_SIZE);
-    if(Alt_OUT_Queue == NULL){
         while(1);
     }
 
@@ -93,8 +97,6 @@ void initADC (void) {
 }
 
 uint32_t getAlt(void){
-    uint32_t altitude = 0;
-    xQueueReceive(Alt_OUT_Queue, &altitude, pdMS_TO_TICKS(10));
     return altitude;
 }
 
@@ -104,7 +106,6 @@ void processAlt(void* pvParameter) {
     int i;
     int n = 0;
     int temp = 0;
-    uint32_t altitude;
     int32_t meanVal;
     int32_t altLandedValue;
 
@@ -131,9 +132,6 @@ void processAlt(void* pvParameter) {
             }
 
             altitude = ((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
-            if (!xQueueSend(Alt_OUT_Queue, &altitude, 0)) {
-                while(1);
-            }
         }
     }
 }

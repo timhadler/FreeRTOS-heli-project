@@ -11,8 +11,8 @@
 #include "myButtons.h"
 
 
-int16_t targetAlt;
-int16_t targetYaw;
+static int16_t targetAlt;
+static int16_t targetYaw;
 
 int16_t getTargetAlt(void) {
     return targetAlt;
