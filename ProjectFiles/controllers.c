@@ -11,16 +11,6 @@
 #include "altitude.h"
 #include "myYaw.h"
 
-#define KP_M 1
-#define KI_M 0.18
-#define KP_T 1
-#define KI_T 0.18
-#define T_DELTA 0.01
-//#define SETALT 0
-#define OUTPUT_MAX 95
-#define OUTPUT_MIN 5
-//#define SETYAW 0
-
 
 int16_t getAltErr(int16_t tAlt) {
     return tAlt - getAlt();
@@ -33,21 +23,18 @@ int16_t getYawErr(int16_t tYaw) {
 
 
 void findReference(void) {
-    setMotor(MOTOR_M, 10);
-    setMotor(MOTOR_T, 50);
+    //setMotor(MOTOR_M, 10);
+    //setMotor(MOTOR_T, 50);
 
     while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
         continue;
     }
-    setMotor(MOTOR_M, 0);
-    setMotor(MOTOR_T, 0);
+    //setMotor(MOTOR_M, 0);
+    //setMotor(MOTOR_T, 0);
 }
 
 
 void piMainUpdate(int16_t setAlt) {
-    //uint8_t uMainDuty = 0;
-    //uint8_t uTailDuty = 0;
-
     static double I;
     double P;
     double control;
@@ -101,5 +88,5 @@ void piTailUpdate(int16_t setYaw) {
     } else {
         I += dI; // Accumulates the a history of the error in the integral
     }
-    setMotor(MOTOR_T, 37);
+    setMotor(MOTOR_T, control);
 }
