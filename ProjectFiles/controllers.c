@@ -23,14 +23,15 @@ int16_t getYawErr(int16_t tYaw) {
 
 
 void findReference(void) {
-    //setMotor(MOTOR_M, 10);
-    //setMotor(MOTOR_T, 50);
+    setMotor(MOTOR_M, 10);
+    setMotor(MOTOR_T, 20);
 
     while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
-        continue;
+        //continue;
     }
-    //setMotor(MOTOR_M, 0);
-    //setMotor(MOTOR_T, 0);
+
+    setMotor(MOTOR_M, 0);
+    setMotor(MOTOR_T, 0);
 }
 
 

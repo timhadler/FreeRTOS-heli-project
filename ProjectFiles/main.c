@@ -82,7 +82,7 @@ void displayOLED(void* pvParameters) {
 
 
 void controller(void* pvParameters) {
-    findReference();
+    //findReference();
 
     while(1) {
         yaw = getYaw();
