@@ -18,6 +18,7 @@
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
+#include "driverlib/uart.h"
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
@@ -84,11 +85,82 @@ void controller(void* pvParameters) {
 }
 
 
+//********************************************************
+// initialiseUSB_UART - 8 bits, 1 stop bit, no parity
+//********************************************************
+void
+initialiseUSB_UART (void)
+{
+    //
+    // Enable GPIO port A which is used for UART0 pins.
+    //
+    SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
+    SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
+    //
+    // Select the alternate (UART) function for these pins.
+    //
+    GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
+    GPIOPinConfigure (GPIO_PA0_U0RX);
+    GPIOPinConfigure (GPIO_PA1_U0TX);
+
+    UARTConfigSetExpClk(UART_USB_BASE, SysCtlClockGet(), BAUD_RATE,
+            UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+            UART_CONFIG_PAR_NONE);
+    UARTFIFOEnable(UART_USB_BASE);
+    UARTEnable(UART_USB_BASE);
+}
+
+
+//**********************************************************************
+// Transmit a string via UART0
+//**********************************************************************
+void
+UARTSend (char *pucBuffer)
+{
+    // Loop while there are more characters to send.
+    while(*pucBuffer)
+    {
+        // Write the next character to the UART Tx FIFO.
+        UARTCharPut(UART_USB_BASE, *pucBuffer);
+        pucBuffer++;
+    }
+}
+
+
+// Function to update UART communications
+void sendData(void* pvParameters) {
+    char statusStr[16 + 1];
+
+    while(1) {
+        // Form and send a status message to the console
+        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), getTargetAlt()); // * usprintf
+        UARTSend (statusStr);
+        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), getTargetYaw()); // * usprintf
+        UARTSend (statusStr);
+        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
+        UARTSend (statusStr);
+
+/*        if (heli_state == landing) {
+            usprintf (statusStr, "Mode landing \r\n");
+        } else if (heli_state == landed) {
+            usprintf (statusStr, "Mode landed \r\n");
+        } else if (heli_state == take_off) {
+            usprintf (statusStr, "Mode take off \r\n");
+        } else {
+            usprintf (statusStr, "Mode in flight \r\n");
+        }
+        UARTSend (statusStr);*/
+        taskDelayMS(1000/2);
+    }
+}
+
+
 void createTasks(void) {
     createTask(pollButton, "Button Poll", 256, (void *) NULL, 3, NULL);
     createTask(displayOLED, "display", 256, (void *) NULL, 3, NULL);
     createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
     createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
+    createTask(sendData, "UART", 50, (void *) NULL, 5, NULL);
 }
 
 
@@ -104,6 +176,7 @@ void initialize(void) {
     initMotors();
     initYaw();
     createTasks();
+    initialiseUSB_UART();
 
     //// BUTTONS...
     GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);
