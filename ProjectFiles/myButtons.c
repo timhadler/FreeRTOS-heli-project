@@ -11,10 +11,10 @@
 #include "myButtons.h"
 
 
-static int16_t targetAlt;
+static uint8_t targetAlt;
 static int16_t targetYaw;
 
-int16_t getTargetAlt(void) {
+uint8_t getTargetAlt(void) {
     return targetAlt;
 }
 

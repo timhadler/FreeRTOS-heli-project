@@ -22,10 +22,8 @@ int16_t getYawErr(int16_t tYaw) {
 }
 
 
-void findReference(void) {
-
-    setMotor(MOTOR_M, 10);
-    setMotor(MOTOR_T, 20);
+uint8_t takeOff(void) {
+    uint8_t target = 0;
 
     while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
         //continue;
@@ -36,7 +34,7 @@ void findReference(void) {
 }
 
 
-void piMainUpdate(int16_t setAlt) {
+void piMainUpdate(uint8_t setAlt) {
     static double I;
     double P;
     double control;

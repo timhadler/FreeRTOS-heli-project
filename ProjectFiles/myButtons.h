@@ -14,7 +14,7 @@
 
 void pollButton(void* pvParameters);
 
-int16_t getTargetAlt(void);
+uint8_t getTargetAlt(void);
 
 int16_t getTargetYaw(void);
 

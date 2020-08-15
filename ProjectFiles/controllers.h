@@ -40,12 +40,12 @@ int16_t
 getYawErr(int16_t setAlt);
 
 void
-piMainUpdate(int16_t setAlt);
+piMainUpdate(uint8_t setAlt);
 
 void
 piTailUpdate(int16_t setYaw);
 
-void
-findReference(void);
+uint8_t
+takeOff(void);
 
 #endif /* CONTROLLERS_H_ */
