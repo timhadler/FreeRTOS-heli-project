@@ -27,6 +27,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "buttons4.h"
 
@@ -44,12 +45,16 @@
 //******************************************************************
 // Global Variables
 //******************************************************************
+static uint8_t targetAlt;
+static int16_t targetYaw;
 
 
 //******************************************************************
 // Functions
 //******************************************************************
 void displayOLED(void* pvParameters) {
+
+
     char text_buffer[16];
     while(1) {
         // Display Height
@@ -60,10 +65,10 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Yaw: %d", getYaw());
         writeDisplay(text_buffer, LINE_2);
 
-        sprintf(text_buffer, "Target Alt: %d%%", getTargetAlt());
+        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
         writeDisplay(text_buffer, LINE_3);
 
-        sprintf(text_buffer, "Target Yaw: %d",getTargetYaw());
+        sprintf(text_buffer, "Target Yaw: %d", targetYaw);
         writeDisplay(text_buffer, LINE_4);
 
         taskDelayMS(1000/DISPLAY_RATE_HZ);
@@ -71,14 +76,54 @@ void displayOLED(void* pvParameters) {
 }
 
 
+void pollButton(void* pvParameters) {
+    targetAlt = 0;
+    targetYaw = 0;
+    xButtPollSemaphore = xSemaphoreCreateBinary();
+
+    xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
+    while (1) {
+        updateButtons();
+        if (checkButton (UP) == PUSHED) {
+            if (targetAlt != 100) {
+                targetAlt += 10;
+            }
+
+        } else if (checkButton (DOWN) == PUSHED) {
+            if (!targetAlt == 0){
+                targetAlt -= 10;
+            }
+
+        } else if (checkButton (LEFT) == PUSHED) {
+            if (targetYaw == 0) {
+                targetYaw = 345;
+            } else {
+                targetYaw -= 15;
+            }
+
+        } else if (checkButton (RIGHT) == PUSHED) {
+            if (targetYaw == 345) {
+                targetYaw = 0;
+            } else {
+                targetYaw += 15;
+            }
+        }
+
+        taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
+    }
+}
+
+
 void controller(void* pvParameters) {
+    xControlSemaphore = xSemaphoreCreateBinary();
 
-    //findReference();
-
+    xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
+    targetYaw = getReference();
+    targetAlt = 10;
     while(1) {
 
-        piMainUpdate(getTargetAlt());
-        piTailUpdate(getTargetYaw());
+        piMainUpdate(targetAlt);
+        piTailUpdate(targetYaw);
 
         taskDelayMS(1000/CONTROLLER_RATE_HZ);
     }
@@ -133,9 +178,9 @@ void sendData(void* pvParameters) {
 
     while(1) {
         // Form and send a status message to the console
-        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), getTargetAlt()); // * usprintf
+        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
         UARTSend (statusStr);
-        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), getTargetYaw()); // * usprintf
+        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
         UARTSend (statusStr);
         sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
         UARTSend (statusStr);
@@ -161,6 +206,7 @@ void createTasks(void) {
     createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
     createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
     createTask(sendData, "UART", 200, (void *) NULL, 5, NULL);
+    createTask(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
 }
 
 
@@ -170,6 +216,7 @@ void initialize(void) {
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
     initButtons();
+    initModeSwitch();
     initADC();
     initDisplay();
     initBuffer();
@@ -208,6 +255,5 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    createSemaphores();
     startFreeRTOS();
 }

@@ -106,10 +106,16 @@ void YawIntHandler(void) {
             }
             currentState = nextState;
 
-            // Limits the yaw to +-180 degees from the reference point
+/*            // Limits the yaw to +-180 degees from the reference point
             if (slots == 224 || slots == -224) {
                 slots = slots*-1; // Switches the sign of yaw angle
+            }*/
+            if (slots < 0) {
+                slots = DISK_INTERRUPTS + slots;
+            } else if (slots > DISK_INTERRUPTS) {
+                slots = 0;
             }
+
         yaw = (360 * slots) / DISK_INTERRUPTS;
         GPIOIntClear(YAW_GPIO_BASE, CH_A | CH_B);
 }
