@@ -57,13 +57,13 @@ void displayOLED(void* pvParameters) {
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
-        sprintf(text_buffer, "Yaw: %d deg", getYaw());
+        sprintf(text_buffer, "Yaw: %d", getYaw());
         writeDisplay(text_buffer, LINE_2);
 
         sprintf(text_buffer, "Target Alt: %d%%", getTargetAlt());
         writeDisplay(text_buffer, LINE_3);
 
-        sprintf(text_buffer, "Target Yaw: %ddeg",getTargetYaw());
+        sprintf(text_buffer, "Target Yaw: %d",getTargetYaw());
         writeDisplay(text_buffer, LINE_4);
 
         taskDelayMS(1000/DISPLAY_RATE_HZ);
@@ -156,11 +156,11 @@ void sendData(void* pvParameters) {
 
 
 void createTasks(void) {
-    createTask(pollButton, "Button Poll", 256, (void *) NULL, 3, NULL);
-    createTask(displayOLED, "display", 256, (void *) NULL, 3, NULL);
+    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
     createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
     createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    createTask(sendData, "UART", 50, (void *) NULL, 5, NULL);
+    createTask(sendData, "UART", 200, (void *) NULL, 5, NULL);
 }
 
 
