@@ -169,9 +169,6 @@ void sendData(void* pvParameters) {
         sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
         UARTSend (statusStr);
 
-        sprintf (statusStr, "Ref: %d \r\n", GPIOPinRead(REF_GPIO_BASE, REF_PIN)); // * usprintf
-        UARTSend (statusStr);
-
 
 /*        if (heli_state == landing) {
             usprintf (statusStr, "Mode landing \r\n");
