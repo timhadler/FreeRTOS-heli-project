@@ -12,11 +12,10 @@
 #include <stdio.h>
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "OLEDDisplay.h"
-#include "myFreeRTOS.h"
 
 //int16_t yaw = 6;
-extern int32_t altitude;
-extern int32_t meanVal;
+//extern int32_t altitude;
+//extern int32_t meanVal;
 
 // Initialise the Orbit OLED display
 void initDisplay(void) {

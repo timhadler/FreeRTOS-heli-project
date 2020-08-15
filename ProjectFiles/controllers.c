@@ -6,7 +6,6 @@
  */
 
 #include <stdint.h>
-//#include <stdbool.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -14,7 +13,6 @@
 #include "myMotors.h"
 #include "altitude.h"
 #include "myYaw.h"
-#include "myFreeRTOS.h"
 
 
 static int16_t reference;
@@ -50,6 +48,7 @@ int16_t getYawErr(int16_t tYaw) {
 
 void takeOff(void* pvParameters) {
     uint8_t target = 0;
+    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
     xTakeOffSemaphore = xSemaphoreCreateBinary();
     int n = 0;
 
@@ -72,7 +71,7 @@ void takeOff(void* pvParameters) {
             n++;
         }
 
-        taskDelayMS(1000/250);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
 

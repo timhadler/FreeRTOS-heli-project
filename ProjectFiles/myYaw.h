@@ -11,10 +11,7 @@
 #include "driverlib/gpio.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "task.h"
-#include "timers.h"
+
 
 // define Yaw gpio base and pins
 #define CH_A   GPIO_PIN_0 // CHannel A and B for sensing yaw
@@ -28,8 +25,8 @@
 /* Sets variables */
 
 /* FreeRTOS variables*/
-static QueueHandle_t YAW_Queue;
-static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//static QueueHandle_t YAW_Queue;
+//static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 void
 initYaw(void);

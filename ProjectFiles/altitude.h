@@ -6,11 +6,7 @@
 #define ALTITUDE_H_
 
 #include <stdint.h>
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "task.h"
 #include "timers.h"
-
 
 /* Constants */
 #define Alt_IN_QUEUE_SIZE 10                // The size of the queue containing the raw ADC values.

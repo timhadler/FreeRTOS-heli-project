@@ -22,7 +22,6 @@
 #include "utils/ustdlib.h"
 #include "stdlib.h"
 
-//#include "inc/tm4c123gh6pm.h"
 #include "driverlib/pwm.h"
 
 #include "FreeRTOS.h"
@@ -33,13 +32,11 @@
 
 #include "OLEDDisplay.h"
 #include "constants.h"
-#include "buffer.h"
-#include "myFreeRTOS.h"
+//#include "myFreeRTOS.h"
 #include "myMotors.h"
 #include "myYaw.h"
 #include "altitude.h"
 #include "controllers.h"
-#include "myButtons.h"
 
 
 //******************************************************************
@@ -52,13 +49,22 @@ static int16_t targetYaw;
 //******************************************************************
 // Functions
 //******************************************************************
-void displayOLED(void* pvParameters) {
+void SwitchModeIntHandler(void) {
+    if (GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN)) {
+        xSemaphoreGive(xTakeOffSemaphore);
+    }
 
+    GPIOIntClear(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
+}
+
+
+void displayOLED(void* pvParameters) {
+    const uint16_t delay_ms = 1000/DISPLAY_RATE_HZ;
 
     char text_buffer[16];
     while(1) {
         // Display Height
-        sprintf(text_buffer, "Altitude: %d%%", getAlt());
+        sprintf(text_buffer, "Altitude: %d%%", GPIOPinRead(REF_GPIO_BASE, REF_PIN));
         writeDisplay(text_buffer, LINE_1);
 
         // Display yaw
@@ -71,7 +77,8 @@ void displayOLED(void* pvParameters) {
         sprintf(text_buffer, "Target Yaw: %d", targetYaw);
         writeDisplay(text_buffer, LINE_4);
 
-        taskDelayMS(1000/DISPLAY_RATE_HZ);
+
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
 
@@ -79,6 +86,7 @@ void displayOLED(void* pvParameters) {
 void pollButton(void* pvParameters) {
     targetAlt = 0;
     targetYaw = 0;
+    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
     xButtPollSemaphore = xSemaphoreCreateBinary();
 
     xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
@@ -108,14 +116,14 @@ void pollButton(void* pvParameters) {
                 targetYaw += 15;
             }
         }
-
-        taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
 
 
 void controller(void* pvParameters) {
     xControlSemaphore = xSemaphoreCreateBinary();
+    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
 
     xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
     targetYaw = getReference();
@@ -125,8 +133,84 @@ void controller(void* pvParameters) {
         piMainUpdate(targetAlt);
         piTailUpdate(targetYaw);
 
-        taskDelayMS(1000/CONTROLLER_RATE_HZ);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
+}
+
+
+
+//**********************************************************************
+// Transmit a string via UART0
+//**********************************************************************
+void
+UARTSend (char *pucBuffer)
+{
+    // Loop while there are more characters to send.
+    while(*pucBuffer)
+    {
+        // Write the next character to the UART Tx FIFO.
+        UARTCharPut(UART_USB_BASE, *pucBuffer);
+        pucBuffer++;
+    }
+}
+
+
+// Function to update UART communications
+void sendData(void* pvParameters) {
+    char statusStr[16 + 1];
+    const uint16_t delay_ms = 1000/UART_SEND_RATE_HZ;
+
+    while(1) {
+        // Form and send a status message to the console
+        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
+        UARTSend (statusStr);
+        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
+        UARTSend (statusStr);
+        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
+        UARTSend (statusStr);
+
+        sprintf (statusStr, "Ref: %d \r\n", GPIOPinRead(REF_GPIO_BASE, REF_PIN)); // * usprintf
+        UARTSend (statusStr);
+
+
+/*        if (heli_state == landing) {
+            usprintf (statusStr, "Mode landing \r\n");
+        } else if (heli_state == landed) {
+            usprintf (statusStr, "Mode landed \r\n");
+        } else if (heli_state == take_off) {
+            usprintf (statusStr, "Mode take off \r\n");
+        } else {
+            usprintf (statusStr, "Mode in flight \r\n");
+        }
+        UARTSend (statusStr);*/
+
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    }
+}
+
+
+void createTasks(void) {
+    xTaskCreate(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
+    xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
+    xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
+    xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
+    xTaskCreate(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
+}
+
+
+void initModeSwitch(void) {
+    // initialize mode switch
+    SysCtlPeripheralEnable(MODE_PERIPH_GPIO);
+    GPIOPinTypeGPIOInput (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
+    GPIOPadConfigSet (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN, GPIO_STRENGTH_2MA,
+          GPIO_PIN_TYPE_STD_WPD);
+
+    // Set up mode switch interrupts
+    // Interrupt on both edges
+    GPIOIntTypeSet(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN, GPIO_BOTH_EDGES);
+    GPIOIntRegister(SWITCH_MODE_GPIO_BASE, SwitchModeIntHandler);
+    GPIOIntEnable(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN);
 }
 
 
@@ -156,60 +240,6 @@ initialiseUSB_UART (void)
 }
 
 
-//**********************************************************************
-// Transmit a string via UART0
-//**********************************************************************
-void
-UARTSend (char *pucBuffer)
-{
-    // Loop while there are more characters to send.
-    while(*pucBuffer)
-    {
-        // Write the next character to the UART Tx FIFO.
-        UARTCharPut(UART_USB_BASE, *pucBuffer);
-        pucBuffer++;
-    }
-}
-
-
-// Function to update UART communications
-void sendData(void* pvParameters) {
-    char statusStr[16 + 1];
-
-    while(1) {
-        // Form and send a status message to the console
-        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
-        UARTSend (statusStr);
-
-/*        if (heli_state == landing) {
-            usprintf (statusStr, "Mode landing \r\n");
-        } else if (heli_state == landed) {
-            usprintf (statusStr, "Mode landed \r\n");
-        } else if (heli_state == take_off) {
-            usprintf (statusStr, "Mode take off \r\n");
-        } else {
-            usprintf (statusStr, "Mode in flight \r\n");
-        }
-        UARTSend (statusStr);*/
-        taskDelayMS(1000/2);
-    }
-}
-
-
-void createTasks(void) {
-    createTask(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
-    createTask(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    createTask(controller, "controller", 56, (void *) NULL, 2, NULL);
-    createTask(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    createTask(sendData, "UART", 200, (void *) NULL, 5, NULL);
-    createTask(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
-}
-
-
 // Initialize the program
 void initialize(void) {
     // Set clock to 80MHz
@@ -219,7 +249,6 @@ void initialize(void) {
     initModeSwitch();
     initADC();
     initDisplay();
-    initBuffer();
     initMotors();
     initYaw();
     createTasks();
@@ -241,8 +270,11 @@ void initialize(void) {
     ////
 
 
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);                // For Reference signal
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOC));
+    SysCtlPeripheralEnable(REF_PERIPH);                // For Reference signal
+    while (!SysCtlPeripheralReady(REF_PERIPH));
+    GPIOPinTypeGPIOInput(REF_GPIO_BASE, REF_PIN);
+    GPIOPadConfigSet (REF_GPIO_BASE, REF_PIN, GPIO_STRENGTH_4MA,
+       GPIO_PIN_TYPE_STD_WPD);
 
     GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
@@ -255,5 +287,5 @@ void initialize(void) {
 
 void main(void) {
     initialize();
-    startFreeRTOS();
+    vTaskStartScheduler();
 }

@@ -9,9 +9,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "driverlib/interrupt.h"
-#include "myFreeRTOS.h"
 #include "myYaw.h"
-#include "OLEDDisplay.h"
+//#include "OLEDDisplay.h"
 
 
 //******************************************************************
@@ -26,7 +25,6 @@ static volatile int32_t yaw;
 
 
 /* FreeRTOS variables*/
-
 
 
 void initYaw(void) {

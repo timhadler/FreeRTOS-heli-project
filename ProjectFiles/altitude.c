@@ -7,6 +7,10 @@
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+#include "timers.h"
 #include "driverlib/adc.h"
 #include "altitude.h"
 

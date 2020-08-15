@@ -25,7 +25,9 @@
 
 
 #define DISPLAY_RATE 60
+#define UART_SEND_RATE_HZ 4
 #define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
+#define BUTTON_POLL_RATE_HZ 80
 
 
 // LED constants
@@ -33,6 +35,13 @@
 #define LED_RED_PIN GPIO_PIN_1
 #define LED_BLUE_PIN GPIO_PIN_2
 #define LED_GREEN_PIN GPIO_PIN_3
+
+
+// Define MODE switch
+#define MODE_PERIPH_GPIO SYSCTL_PERIPH_GPIOA
+#define SWITCH_MODE_GPIO_BASE GPIO_PORTA_BASE
+#define SWITCH_MODE_INT_PIN GPIO_INT_PIN_7
+#define SWITCH_MODE_PIN GPIO_PIN_7
 
 
 // For unlcoking rght button
