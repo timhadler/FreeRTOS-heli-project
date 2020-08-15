@@ -6,11 +6,23 @@
  */
 
 #include <stdint.h>
+//#include <stdbool.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 #include "controllers.h"
 #include "myMotors.h"
 #include "altitude.h"
 #include "myYaw.h"
+#include "myFreeRTOS.h"
 
+
+static int16_t reference;
+
+
+int16_t getReference(void) {
+    return reference;
+}
 
 int16_t getAltErr(int16_t tAlt) {
     return tAlt - getAlt();
@@ -18,19 +30,50 @@ int16_t getAltErr(int16_t tAlt) {
 
 
 int16_t getYawErr(int16_t tYaw) {
-    return tYaw - getYaw();
+    int16_t error = 0;
+    int16_t currYaw = getYaw();
+
+    // Calculates error
+    if (tYaw > 260 && currYaw < 90) {
+        error = tYaw - 360 - currYaw;
+
+    } else if (tYaw < 90 && currYaw > 260) {
+        error = 360 - currYaw + tYaw;
+
+    } else {
+        error = tYaw - currYaw;
+    }
+
+    return error;
 }
 
 
-uint8_t takeOff(void) {
+void takeOff(void* pvParameters) {
     uint8_t target = 0;
+    xTakeOffSemaphore = xSemaphoreCreateBinary();
+    int n = 0;
 
-    while(GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
-        //continue;
+    xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
+    while(1) {
+
+       // if (GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
+            //reference = getYaw();
+            xSemaphoreGive(xControlSemaphore);
+            xSemaphoreGive(xButtPollSemaphore);
+            xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
+       // } else {
+           // if (n >= 250/2) {
+             //   target+= 5;
+              //  n =0;
+           // }
+
+            //setMotor(MOTOR_T, 10);
+            //piTailUpdate(target);
+           // n++;
+        //}
+
+        taskDelayMS(1000/250);
     }
-
-    setMotor(MOTOR_M, 0);
-    setMotor(MOTOR_T, 0);
 }
 
 

@@ -28,10 +28,19 @@
 #define T_DELTA 0.004
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
+#define CONTROLLER_RATE_HZ 250
+
+
+SemaphoreHandle_t xTakeOffSemaphore;
+SemaphoreHandle_t xControlSemaphore;
+SemaphoreHandle_t xButtPollSemaphore;
 
 
 void
 initControllers(void);
+
+int16_t
+getReference(void);
 
 int16_t
 getAltErr(int16_t setAlt);
@@ -45,7 +54,7 @@ piMainUpdate(uint8_t setAlt);
 void
 piTailUpdate(int16_t setYaw);
 
-uint8_t
-takeOff(void);
+void
+takeOff(void* pvParameters);
 
 #endif /* CONTROLLERS_H_ */
