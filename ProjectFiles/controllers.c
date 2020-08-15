@@ -56,21 +56,21 @@ void takeOff(void* pvParameters) {
     xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
     while(1) {
 
-       // if (GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
-            //reference = getYaw();
+        if (!GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
+            reference = getYaw();
             xSemaphoreGive(xControlSemaphore);
             xSemaphoreGive(xButtPollSemaphore);
             xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
-       // } else {
-           // if (n >= 250/2) {
-             //   target+= 5;
-              //  n =0;
-           // }
+        } else {
+            if (n >= 250/2) {
+                target+= 5;
+                n =0;
+            }
 
-            //setMotor(MOTOR_T, 10);
-            //piTailUpdate(target);
-           // n++;
-        //}
+            setMotor(MOTOR_T, 10);
+            piTailUpdate(target);
+            n++;
+        }
 
         taskDelayMS(1000/250);
     }
