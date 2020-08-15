@@ -12,6 +12,14 @@
 #include "timers.h"
 
 
+/* Constants */
+#define Alt_IN_QUEUE_SIZE 10                // The size of the queue containing the raw ADC values.
+#define Alt_OUT_QUEUE_SIZE 1                // The size of the queue containg the final altitude value.
+#define SAMPLE_RATE_HZ 100                  // The sampling rate for altitude readings (well over the jitter of 4Hz)
+#define VOLTAGE_SENSOR_RANGE 900            // The voltage range for the height sensor [mV]
+#define QUEUE_ITEM_SIZE sizeof(uint32_t)    //4 bytes which is the size of each ACD sample
+
+
 /* The handler for the ADC conversion complete interrupt.
    Writes to the circular buffer */
 void
