@@ -21,11 +21,11 @@
 #define REF_INT_PIN GPIO_INT_PIN_4
 #define REF_PIN GPIO_PIN_4
 
-#define KP_M 10
-#define KI_M 0.18
-#define KP_T 10
-#define KI_T 0.18
-#define T_DELTA 0.01
+#define KP_M 1
+#define KI_M 0.3
+#define KP_T 0.7
+#define KI_T 0.3
+#define T_DELTA 0.004
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
 
