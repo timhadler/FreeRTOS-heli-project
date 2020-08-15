@@ -6,52 +6,39 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "driverlib/gpio.h"
+#include "inc/hw_memmap.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/sysctl.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 #include "buttons4.h"
 #include "myFreeRTOS.h"
 #include "myButtons.h"
+#include "controllers.h"
 
 
-static uint8_t targetAlt;
-static int16_t targetYaw;
-
-uint8_t getTargetAlt(void) {
-    return targetAlt;
-}
-
-
-int16_t getTargetYaw(void) {
-    return targetYaw;
-}
-
-
-void pollButton(void* pvParameters) {
-    targetAlt = 0;
-    targetYaw = 0;
-
-    while (1) {
-        updateButtons();
-        if (checkButton (UP) == PUSHED) {
-            targetAlt += 10;
-        } else if (checkButton (DOWN) == PUSHED) {
-            targetAlt -= 10;
-        } else if (checkButton (LEFT) == PUSHED) {
-            targetYaw -= 15;
-        } else if (checkButton (RIGHT) == PUSHED) {
-            targetYaw += 15;
-        }
-
-        if (targetAlt > 100) {
-            targetAlt = 100;
-        }
-        if (targetAlt < 0) {
-            targetAlt = 0;
-        }
-        if (targetYaw > 180) {
-            targetYaw = -165;
-        }
-        if (targetYaw < -165) {
-            targetYaw = 180;
-        }
-        taskDelayMS(1000/BUTTON_POLL_RATE_HZ);
+void SwitchModeIntHandler(void) {
+    if (GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN)) {
+        xSemaphoreGive(xTakeOffSemaphore);
     }
+
+    GPIOIntClear(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
+}
+
+
+void initModeSwitch(void) {
+    // initialize mode switch
+    SysCtlPeripheralEnable(MODE_PERIPH_GPIO);
+    GPIOPinTypeGPIOInput (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
+    GPIOPadConfigSet (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN, GPIO_STRENGTH_2MA,
+          GPIO_PIN_TYPE_STD_WPD);
+
+    // Set up mode switch interrupts
+    // Interrupt on both edges
+    GPIOIntTypeSet(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN, GPIO_BOTH_EDGES);
+    GPIOIntRegister(SWITCH_MODE_GPIO_BASE, SwitchModeIntHandler);
+    GPIOIntEnable(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN);
 }
