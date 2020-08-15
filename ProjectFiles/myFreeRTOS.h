@@ -47,6 +47,5 @@ void startFreeRTOS(void);
 // Creates a task delay through FreeRTOS for a given time in milliseconds
 void taskDelayMS(uint16_t delay_ms);
 
-void createSemaphores();
 
 #endif /* MYFREERTOS_H_ */

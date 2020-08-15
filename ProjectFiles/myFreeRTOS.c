@@ -41,9 +41,3 @@ void startFreeRTOS(void) {
 void taskDelayMS(uint16_t delay_ms) {
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
 }
-
-
-void createSemaphores() {
-
-    //xYawMutex = xSemaphoreCreateMutex();
-}
