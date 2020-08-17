@@ -90,12 +90,21 @@ void displayOLED(void* pvParameters) {
     }
 }
 
+<<<<<<< HEAD
 
 void pollModeSwitch(void* pvParameters) {
     uint8_t state;
     int32_t mode;
     const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
 
+=======
+
+void pollModeSwitch(void* pvParameters) {
+    uint8_t state;
+    int32_t mode;
+    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
+
+>>>>>>> 1b2657cce665c5c46de2df355733ecd426b72b33
     while(1) {
         state = getState();
         mode = GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);

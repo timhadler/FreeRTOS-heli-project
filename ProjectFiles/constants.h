@@ -27,8 +27,7 @@
 #define DISPLAY_RATE 60
 #define UART_SEND_RATE_HZ 4
 #define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
-#define BUTTON_POLL_RATE_HZ 80
-
+#define BUTTON_POLL_RATE_HZ 60
 
 // LED constants
 #define LED_GPIO_BASE GPIO_PORTF_BASE

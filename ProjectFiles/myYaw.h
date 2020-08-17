@@ -31,6 +31,9 @@
 void
 initYaw(void);
 
+void
+setYawReference(void);
+
 int32_t
 getYaw(void);
 

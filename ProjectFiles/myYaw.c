@@ -17,7 +17,7 @@
 // Global Variables
 //******************************************************************
 enum quadrature {A=0, B=1, C=3, D=2}; // Sets the values for the finite state machine
-static volatile int32_t yaw;
+static int32_t slots;
 
 /* Constants */
 #define QUEUE_SIZE 1 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
@@ -43,14 +43,18 @@ void initYaw(void) {
 
 
 int32_t getYaw(void){
-    return yaw;
+    return (int32_t) (360 * slots) / DISK_INTERRUPTS;
+}
+
+
+void setYawReference(void) {
+    slots = 0;
 }
 
 
 // This is the interrupt ISR for the yaw sensors
 // 'Gives' a semaphore to defer the event processing to a FreeRTOS task
 void YawIntHandler(void) {
-    static int32_t slots;
     static int32_t currentState;
     int32_t nextState;
 
@@ -108,12 +112,13 @@ void YawIntHandler(void) {
             if (slots == 224 || slots == -224) {
                 slots = slots*-1; // Switches the sign of yaw angle
             }*/
+
+            // Limits Yaw to 0 - 360 degrees
             if (slots < 0) {
                 slots = DISK_INTERRUPTS + slots;
             } else if (slots > DISK_INTERRUPTS) {
                 slots = 0;
             }
 
-        yaw = (360 * slots) / DISK_INTERRUPTS;
         GPIOIntClear(YAW_GPIO_BASE, CH_A | CH_B);
 }

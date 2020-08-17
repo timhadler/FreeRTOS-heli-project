@@ -18,6 +18,11 @@
 #define QUEUE_ITEM_SIZE         sizeof(uint32_t)    //4 bytes which is the size of each ACD sample
 #define minAlt                  2300                // The minimum voltage range for the height sensor [mV]
 #define maxAlt                  1100                // The maximum voltage range for the height sensor [mV]
+#define Alt_IN_QUEUE_SIZE 10                // The size of the queue containing the raw ADC values.
+//#define Alt_OUT_QUEUE_SIZE 1                // The size of the queue containg the final altitude value.
+#define SAMPLE_RATE_HZ 100                  // The sampling rate for altitude readings (well over the jitter of 4Hz)
+#define VOLTAGE_SENSOR_RANGE 962            // The voltage range for the height sensor [mV]
+#define QUEUE_ITEM_SIZE sizeof(uint32_t)    //4 bytes which is the size of each ACD sample
 
 
 /* The handler for the ADC conversion complete interrupt.
@@ -28,7 +33,7 @@ ADCIntHandler(void);
 void
 initADC (void);
 
-uint32_t
+uint8_t
 getAlt(void);
 
 uint32_t

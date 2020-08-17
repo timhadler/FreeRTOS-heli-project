@@ -17,6 +17,7 @@
 #include "altitude.h"
 
 
+
 //******************************************************************
 // Global Variables
 //******************************************************************
@@ -25,28 +26,25 @@ static uint32_t altitude = 0;
 //******************************************************************
 // FreeRTOS Variables
 //******************************************************************
+
+/* FreeRTOS variables*/
 static TimerHandle_t Alt_IN_Timer;
 static QueueHandle_t Alt_IN_Queue;
-static BaseType_t xHigherPriorityTaskWoken;
 
 
-/* The handler for the ADC conversion complete interrupt.
-   Writes to the circular buffer */
+// The handler for the ADC conversion complete interrupt.
 void ADCIntHandler(void) {
     uint32_t sample;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
     // Get the single sample from ADC0.  ADC_BASE is defined in
     // inc/hw_memmap.h
     ADCSequenceDataGet(ADC0_BASE, 3, &sample);
-    //
+
     // Place it in FreeRTOS Queue
     xQueueSendFromISR(Alt_IN_Queue, &sample, &xHigherPriorityTaskWoken);
 
-    if(xHigherPriorityTaskWoken)
-      {
-          /* Actual macro used here is port specific. */
-          taskYIELD();
-      }    // Clean up, clearing the interrupt
-
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     ADCIntClear(ADC0_BASE, 3);
 }
 
@@ -101,7 +99,7 @@ void initADC (void) {
     ADCIntEnable(ADC0_BASE, 3);
 }
 
-uint32_t getAlt(void){
+uint8_t getAlt(void){
     return altitude;
 }
 
@@ -114,18 +112,19 @@ uint32_t getMidAlt(void){
 
 /* Calculates the average mean of ADC readings and altitude of the helicopter from a FreeRTOS queue*/
 void processAlt(void* pvParameter) {
-    int sum = 0;
-    int i;
-    int n = 0;
-    int temp = 0;
-    int32_t meanVal;
-    int32_t altLandedValue;
+    uint32_t temp = 0;
+    uint32_t sum = 0;
+    uint8_t count = 0;
+    uint32_t avg = 0;
+    uint32_t landedAlt = 0;
+
 
     /* start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit.
        So, it will keep checking the status of the queue for ever.*/
     xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
     while(1){
+<<<<<<< HEAD
         if(xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY)){
             sum = 0;
             for (i = 0; i < Alt_QUEUE_SIZE; i++) {
@@ -140,6 +139,29 @@ void processAlt(void* pvParameter) {
                     n++;
             }
             altitude = ((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+=======
+        xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY);
+        sum += temp;
+        count++;
+
+        if (count == Alt_IN_QUEUE_SIZE) {
+            avg = (2 * sum + Alt_IN_QUEUE_SIZE) / 2 / Alt_IN_QUEUE_SIZE;
+            sum = 0;
+            count = 0;
+
+            // First time the buffer is filled, heli should be landed, record the averaged adc values
+            if (landedAlt == 0) {
+                landedAlt = avg;
+            }
+        }
+
+        altitude = 100 * (landedAlt - avg) / VOLTAGE_SENSOR_RANGE;
+
+        if (altitude > 100) {
+            altitude = 100;
+        } else if (altitude < 0) {
+            altitude = 0;
+>>>>>>> 1b2657cce665c5c46de2df355733ecd426b72b33
         }
     }
 }
