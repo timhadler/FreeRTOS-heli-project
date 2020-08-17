@@ -138,3 +138,22 @@ checkButton (uint8_t butName)
 	return NO_CHANGE;
 }
 
+
+/*  Checks to see if the up, down, left, or right button has been pushed */
+int32_t
+buttonPressed(void)
+{
+    if (checkButton(UP) == PUSHED) {
+        return UP;
+    } else if (checkButton(DOWN) == PUSHED) {
+        return DOWN;
+    } else if (checkButton(LEFT) == PUSHED) {
+        return LEFT;
+    } else if (checkButton(RIGHT) == PUSHED) {
+        return RIGHT;
+    }
+}
+
+
+
+
