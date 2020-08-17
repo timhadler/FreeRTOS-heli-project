@@ -13,7 +13,7 @@
 
 // Define UART constants
 #define MAX_STR_LEN 16
-#define BAUD_RATE 9600
+//#define BAUD_RATE 9600
 #define UART_USB_BASE           UART0_BASE
 #define UART_USB_PERIPH_UART    SYSCTL_PERIPH_UART0
 #define UART_USB_PERIPH_GPIO    SYSCTL_PERIPH_GPIOA

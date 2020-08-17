@@ -24,6 +24,9 @@
 #include "driverlib/debug.h"
 #include "inc/tm4c123gh6pm.h"  // Board specific defines (for PF0)
 #include "buttons4.h"
+#include "control_command.h"
+#include "constants.h"
+
 
 
 // *******************************************************
@@ -137,4 +140,27 @@ checkButton (uint8_t butName)
 	}
 	return NO_CHANGE;
 }
+
+void pollButton(void* pvParameters) {
+    targetAlt = 0;
+    targetYaw = 0;
+    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
+    xButtPollSemaphore = xSemaphoreCreateBinary();
+
+    xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
+    while (1) {
+        updateButtons();
+        if (checkButton (UP) == PUSHED) {
+            incrAlt();
+        } else if (checkButton (DOWN) == PUSHED) {
+            decrAlt();
+        } else if (checkButton (LEFT) == PUSHED) {
+            incrYaw();
+        } else if (checkButton (RIGHT) == PUSHED) {
+            decrYaw();
+        }
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    }
+}
+
 

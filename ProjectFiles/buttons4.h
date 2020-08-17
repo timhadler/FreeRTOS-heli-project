@@ -16,6 +16,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "FreeRTOS.h"
+#include "semphr.h"
+
+
 
 //*****************************************************************************
 // Constants
@@ -49,6 +53,12 @@ enum butStates {RELEASED = 0, PUSHED, NO_CHANGE};
 // read the pin in the opposite condition, before the state changes and
 // a flag is set.  Set NUM_BUT_POLLS according to the polling rate.
 
+
+SemaphoreHandle_t xButtPollSemaphore;
+
+
+
+
 // *******************************************************
 // initButtons: Initialise the variables associated with the set of buttons
 // defined by the constants above.
@@ -70,5 +80,11 @@ updateButtons (void);
 // enumeration butStates, excluding 'NUM_BUTS'. Safe under interrupt.
 uint8_t
 checkButton (uint8_t butName);
+
+
+
+void
+pollButton(void* pvParameters);
+
 
 #endif /*BUTTONS_H_*/

@@ -13,9 +13,13 @@
 #include "myMotors.h"
 #include "altitude.h"
 #include "myYaw.h"
+#include "buttons4.h"
+#include "debugger.h"
 
 
 static int16_t reference;
+
+
 
 
 int16_t getReference(void) {
@@ -87,6 +91,7 @@ void piMainUpdate(uint8_t setAlt) {
     error_alt = getAltErr(setAlt); // Error between the set altitude and the actual altitude
 
 
+
     P = KP_M*error_alt;
 
     dI = KI_M*error_alt*T_DELTA;
@@ -102,6 +107,7 @@ void piMainUpdate(uint8_t setAlt) {
         I += dI; // Accumulates the a history of the error in the integral
     }
     setMotor(MOTOR_M, control);
+    dprintf ("Current Alt %d \n", getAlt());
 }
 
 
@@ -131,4 +137,6 @@ void piTailUpdate(int16_t setYaw) {
         I += dI; // Accumulates the a history of the error in the integral
     }
     setMotor(MOTOR_T, control);
+
+    dprintf ("Current %d \n", getYaw());
 }

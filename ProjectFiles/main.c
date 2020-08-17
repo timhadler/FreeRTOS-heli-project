@@ -37,13 +37,14 @@
 #include "myYaw.h"
 #include "altitude.h"
 #include "controllers.h"
+#include "control_command.h"
+#include "debugger.h"
 
 
 //******************************************************************
 // Global Variables
 //******************************************************************
-static uint8_t targetAlt;
-static int16_t targetYaw;
+
 
 
 //******************************************************************
@@ -83,116 +84,15 @@ void displayOLED(void* pvParameters) {
 }
 
 
-void pollButton(void* pvParameters) {
-    targetAlt = 0;
-    targetYaw = 0;
-    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
-    xButtPollSemaphore = xSemaphoreCreateBinary();
-
-    xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
-    while (1) {
-        updateButtons();
-        if (checkButton (UP) == PUSHED) {
-            if (targetAlt != 100) {
-                targetAlt += 10;
-            }
-
-        } else if (checkButton (DOWN) == PUSHED) {
-            if (!targetAlt == 0){
-                targetAlt -= 10;
-            }
-
-        } else if (checkButton (LEFT) == PUSHED) {
-            if (targetYaw == 0) {
-                targetYaw = 345;
-            } else {
-                targetYaw -= 15;
-            }
-
-        } else if (checkButton (RIGHT) == PUSHED) {
-            if (targetYaw == 345) {
-                targetYaw = 0;
-            } else {
-                targetYaw += 15;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
-void controller(void* pvParameters) {
-    xControlSemaphore = xSemaphoreCreateBinary();
-    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
-
-    xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-    targetYaw = getReference();
-    targetAlt = 10;
-    while(1) {
-
-        piMainUpdate(targetAlt);
-        piTailUpdate(targetYaw);
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
-
-//**********************************************************************
-// Transmit a string via UART0
-//**********************************************************************
-void
-UARTSend (char *pucBuffer)
-{
-    // Loop while there are more characters to send.
-    while(*pucBuffer)
-    {
-        // Write the next character to the UART Tx FIFO.
-        UARTCharPut(UART_USB_BASE, *pucBuffer);
-        pucBuffer++;
-    }
-}
-
-
-// Function to update UART communications
-void sendData(void* pvParameters) {
-    char statusStr[16 + 1];
-    const uint16_t delay_ms = 1000/UART_SEND_RATE_HZ;
-
-    while(1) {
-        // Form and send a status message to the console
-        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
-        UARTSend (statusStr);
-
-
-/*        if (heli_state == landing) {
-            usprintf (statusStr, "Mode landing \r\n");
-        } else if (heli_state == landed) {
-            usprintf (statusStr, "Mode landed \r\n");
-        } else if (heli_state == take_off) {
-            usprintf (statusStr, "Mode take off \r\n");
-        } else {
-            usprintf (statusStr, "Mode in flight \r\n");
-        }
-        UARTSend (statusStr);*/
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
 void createTasks(void) {
-    xTaskCreate(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    xTaskCreate(pollButton, "Button Poll", 400, (void *) NULL, 3, NULL);
     xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
+    xTaskCreate(controller_command, "controller", 300, (void *) NULL, 2, NULL);
     xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
+    //xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
     xTaskCreate(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
+    xTaskCreate(debug_log_task, "debug_log_task", 200, (void *) NULL, 4, NULL);
+
 }
 
 
@@ -214,27 +114,6 @@ void initModeSwitch(void) {
 //********************************************************
 // initialiseUSB_UART - 8 bits, 1 stop bit, no parity
 //********************************************************
-void
-initialiseUSB_UART (void)
-{
-    //
-    // Enable GPIO port A which is used for UART0 pins.
-    //
-    SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
-    SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
-    //
-    // Select the alternate (UART) function for these pins.
-    //
-    GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
-    GPIOPinConfigure (GPIO_PA0_U0RX);
-    GPIOPinConfigure (GPIO_PA1_U0TX);
-
-    UARTConfigSetExpClk(UART_USB_BASE, SysCtlClockGet(), BAUD_RATE,
-            UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
-            UART_CONFIG_PAR_NONE);
-    UARTFIFOEnable(UART_USB_BASE);
-    UARTEnable(UART_USB_BASE);
-}
 
 
 // Initialize the program
@@ -249,7 +128,7 @@ void initialize(void) {
     initMotors();
     initYaw();
     createTasks();
-    initialiseUSB_UART();
+    initdebugger();
 
     //// BUTTONS...
     GPIOPinTypeGPIOInput (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN);

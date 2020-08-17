@@ -13,6 +13,10 @@
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+
+
 
 
 // Define ref signal base and pin
@@ -33,7 +37,8 @@
 
 SemaphoreHandle_t xTakeOffSemaphore;
 SemaphoreHandle_t xControlSemaphore;
-SemaphoreHandle_t xButtPollSemaphore;
+
+
 
 
 void
