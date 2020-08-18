@@ -18,13 +18,19 @@
 #define SWITCH_MODE_PIN GPIO_PIN_7
 
 #define BUTTON_POLL_RATE_HZ 60
+#define TIME_THRESHOLD_MS 500
+#define SEQUENCE_LENGTH 4
+
+#define SEQUENCE_1 1
+#define SEQUENCE_2 2
+
 
 
 void initModeSwitch(void);
 
 void SwitchModeIntHandler(void);
 
-void pollButton(void* pvParameters);
+void pollButtons(void* pvParameters);
 
 
 

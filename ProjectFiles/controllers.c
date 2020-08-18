@@ -23,6 +23,9 @@ static bool foundRef;
 static uint8_t targetAlt;
 static int16_t targetYaw;
 
+static bool mode1_flag;
+static bool mode2_flag;
+
 
 uint8_t getState(void) {
     return state;
@@ -36,6 +39,16 @@ uint8_t getTargetAlt(void) {
 
 int16_t getTargetYaw(void) {
     return targetYaw;
+}
+
+
+void setMode1(void) {
+    mode1_flag = true;
+}
+
+
+void setMode2(void) {
+    mode2_flag = true;
 }
 
 
@@ -154,7 +167,7 @@ void takeOff(uint16_t* timer) {
 
           // If heli is not facing reference, increment target yaw at a fixed rate
         } else if (*timer >= CONTROLLER_RATE_HZ / UPDATE_TARGET_RATE_HZ){
-            targetYaw = getYaw() + 5;
+            targetYaw = getYaw() + 15;
             targetAlt = 10;
             *timer = 0;
         }
@@ -179,6 +192,26 @@ void land(uint16_t* timer) {
 }
 
 
+void inFlight(uint16_t* timer) {
+    int16_t tYaw = 0;
+    int16_t cYaw;
+    if (mode1_flag) {
+        // Do mode 1
+
+/*        if (tYaw == 0) {
+            //180
+            cYaw = getYaw();
+            if (cYaw < 180) {
+                tYaw = 180 + cYaw;
+            } else {
+                tYaw = cYaw - 180;
+            }
+        }
+        targetYaw = tYaw;*/
+    }
+}
+
+
 void controller(void* pvParameters) {
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
 
@@ -191,6 +224,8 @@ void controller(void* pvParameters) {
 
         } else if (state == LANDING) {
             land(&tick);
+        } else if (state == IN_FLIGHT) {
+            inFlight(&tick);
         }
 
         piMainUpdate();

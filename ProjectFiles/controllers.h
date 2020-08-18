@@ -29,7 +29,7 @@
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
 #define CONTROLLER_RATE_HZ 250
-#define UPDATE_TARGET_RATE_HZ 3
+#define UPDATE_TARGET_RATE_HZ 1
 
 
 enum heliStates {LANDED=0, LANDING, TAKE_OFF, IN_FLIGHT};
@@ -43,6 +43,10 @@ void
 initControllers(void);
 
 uint8_t getState(void);
+
+void setMode1(void);
+
+void setMode2(void);
 
 int16_t
 getAltErr(void);
@@ -79,5 +83,11 @@ FSM(void* pvParameters);
 
 void
 controller(void* pvParameters);
+
+void takeOff(uint16_t* timer);
+
+void land(uint16_t* timer);
+
+void inFlight(uint16_t* timer);
 
 #endif /* CONTROLLERS_H_ */

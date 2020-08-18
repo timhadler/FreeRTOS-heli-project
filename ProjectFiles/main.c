@@ -56,7 +56,7 @@ void displayOLED(void* pvParameters) {
     char text_buffer[16];
     while(1) {
         // Display Height
-        sprintf(text_buffer, "Altitude: %d%%", getState());
+        sprintf(text_buffer, "Altitude: %d%%", getAlt());
         writeDisplay(text_buffer, LINE_1);
         // Display yaw
         sprintf(text_buffer, "Yaw: %d", getYaw());
@@ -127,7 +127,7 @@ void sendData(void* pvParameters) {
 
 
 void createTasks(void) {
-    xTaskCreate(pollButton, "Button Poll", 200, (void *) NULL, 3, NULL);
+    xTaskCreate(pollButtons, "Button Poll", 200, (void *) NULL, 3, NULL);
     xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
     xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
     xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
