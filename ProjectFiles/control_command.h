@@ -27,8 +27,17 @@ decrAlt(void);
 void
 incrYaw(void);
 
+int32_t
+getCurrentYaw(void);
+
 void
 decrYaw(void);
+
+void
+no_nod(void);
+
+void
+oneeighty(void);
 
 void
 controller_command(void* pvParameters);

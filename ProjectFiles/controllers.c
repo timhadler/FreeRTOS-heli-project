@@ -18,7 +18,7 @@
 
 
 static int16_t reference;
-
+int counter = 0;
 
 
 
@@ -107,7 +107,11 @@ void piMainUpdate(uint8_t setAlt) {
         I += dI; // Accumulates the a history of the error in the integral
     }
     setMotor(MOTOR_M, control);
-    dprintf ("Current Alt %d \n", getAlt());
+
+    if (counter ==  2000) {
+        //dprintf ("CAlt %d \n", getAlt());
+        counter = 0;
+    }
 }
 
 
@@ -122,9 +126,9 @@ void piTailUpdate(int16_t setYaw) {
     error_yaw = getYawErr(setYaw); // Error between the set altitude and the actual altitude
 
 
-    P = KP_M*error_yaw;
+    P = KP_T*error_yaw;
 
-    dI = KI_M*error_yaw*T_DELTA;
+    dI = KI_T*error_yaw*T_DELTA;
 
     control = P + (I + dI);
 
@@ -138,5 +142,11 @@ void piTailUpdate(int16_t setYaw) {
     }
     setMotor(MOTOR_T, control);
 
-    dprintf ("Current %d \n", getYaw());
+    if (counter == 20) {
+        //dprintf ("CYaw %d \n", getYaw());
+        counter = 0;
+    }
+    counter++;
+
+
 }

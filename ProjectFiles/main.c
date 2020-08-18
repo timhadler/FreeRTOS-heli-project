@@ -59,40 +59,13 @@ void SwitchModeIntHandler(void) {
 }
 
 
-void displayOLED(void* pvParameters) {
-    const uint16_t delay_ms = 1000/DISPLAY_RATE_HZ;
-
-    char text_buffer[16];
-    while(1) {
-        // Display Height
-        sprintf(text_buffer, "Altitude: %d%%", GPIOPinRead(REF_GPIO_BASE, REF_PIN));
-        writeDisplay(text_buffer, LINE_1);
-
-        // Display yaw
-        sprintf(text_buffer, "Yaw: %d", getYaw());
-        writeDisplay(text_buffer, LINE_2);
-
-        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
-        writeDisplay(text_buffer, LINE_3);
-
-        sprintf(text_buffer, "Target Yaw: %d", targetYaw);
-        writeDisplay(text_buffer, LINE_4);
-
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
 void createTasks(void) {
     xTaskCreate(pollButton, "Button Poll", 400, (void *) NULL, 3, NULL);
     xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
     xTaskCreate(controller_command, "controller", 300, (void *) NULL, 2, NULL);
     xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    //xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
     xTaskCreate(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
     xTaskCreate(debug_log_task, "debug_log_task", 200, (void *) NULL, 4, NULL);
-
 }
 
 
@@ -109,11 +82,6 @@ void initModeSwitch(void) {
     GPIOIntRegister(SWITCH_MODE_GPIO_BASE, SwitchModeIntHandler);
     GPIOIntEnable(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN);
 }
-
-
-//********************************************************
-// initialiseUSB_UART - 8 bits, 1 stop bit, no parity
-//********************************************************
 
 
 // Initialize the program

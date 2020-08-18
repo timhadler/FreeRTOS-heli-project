@@ -66,10 +66,8 @@ void debug_log_task(void *d)
 {
     while(1) {
         char ch;
-        while (uxQueueMessagesWaiting >0) {
-            if (xQueueReceive(_debug_queue, &ch, portMAX_DELAY))
-                UARTCharPut(UART_USB_BASE, ch);
-        }
+        if (xQueueReceive(_debug_queue, &ch, portMAX_DELAY))
+            UARTCharPut(UART_USB_BASE, ch);
     }
 }
 
@@ -103,55 +101,6 @@ bool dputs(const char *string) {
 
 }
 
-
-
-// Function to update UART communications
-/*
-void sendData(void* pvParameters) {
-    char statusStr[16 + 1];
-    const uint16_t delay_ms = 1000/UART_SEND_RATE_HZ;
-
-    while(1) {
-        // Form and send a status message to the console
-        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
-        UARTSend (statusStr);
-        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
-        UARTSend (statusStr);
-
-
-/*        if (heli_state == landing) {
-            usprintf (statusStr, "Mode landing \r\n");
-        } else if (heli_state == landed) {
-            usprintf (statusStr, "Mode landed \r\n");
-        } else if (heli_state == take_off) {
-            usprintf (statusStr, "Mode take off \r\n");
-        } else {
-            usprintf (statusStr, "Mode in flight \r\n");
-        }
-        UARTSend (statusStr);
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-//**********************************************************************
-// Transmit a string via UART0
-//**********************************************************************
-void
-UARTSend (char *pucBuffer)
-{
-    // Loop while there are more characters to send.
-    while(*pucBuffer)
-    {
-        // Write the next character to the UART Tx FIFO.
-        UARTCharPut(UART_USB_BASE, *pucBuffer);
-        pucBuffer++;
-    }
-}
-
-*/
 
 
 

@@ -37,5 +37,7 @@ void ClearDisplayLine(uint8_t line);
 // Writes string starting at column = 0
 void writeDisplay(char text[16], uint8_t line);
 
+void displayOLED(void* pvParameters);
+
 
 #endif /* OLEDDISPLAY_H_ */
