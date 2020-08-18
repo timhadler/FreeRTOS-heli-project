@@ -34,39 +34,50 @@
 
 enum heliStates {LANDED=0, LANDING, TAKE_OFF, IN_FLIGHT};
 
-SemaphoreHandle_t xTakeOffSemaphore;
-SemaphoreHandle_t xControlSemaphore;
 SemaphoreHandle_t xButtPollSemaphore;
-SemaphoreHandle_t xLandSemaphore;
 SemaphoreHandle_t xFSMSemaphore;
+SemaphoreHandle_t xTakeOffSemaphore;
+SemaphoreHandle_t xLandSemaphore;
 
 void
 initControllers(void);
 
-int16_t
-getRefYaw(void);
-
 uint8_t getState(void);
 
-void setRefYaw(int16_t ref);
+int16_t
+getAltErr(void);
 
 int16_t
-getAltErr(int16_t setAlt);
+getYawErr(void);
+
+uint8_t
+getTargetAlt(void);
 
 int16_t
-getYawErr(int16_t setAlt);
+getTargetYaw(void);
 
 void
-piMainUpdate(uint8_t setAlt);
+incAlt(void);
 
 void
-piTailUpdate(int16_t setYaw);
-
-void FSM(void* pvParameters);
+decAlt(void);
 
 void
-takeOff(void* pvParameters);
+incYaw(void);
 
-void land(void* pvParameters);
+void
+decYaw(void);
+
+void
+piMainUpdate(void);
+
+void
+piTailUpdate(void);
+
+void
+FSM(void* pvParameters);
+
+void
+controller(void* pvParameters);
 
 #endif /* CONTROLLERS_H_ */

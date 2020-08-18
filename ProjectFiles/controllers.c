@@ -14,22 +14,14 @@
 #include "myMotors.h"
 #include "altitude.h"
 #include "myYaw.h"
+#include "userInput.h"
 
 
-static int16_t refYaw;
 static uint8_t state;
 static bool foundRef;
 
-
-int16_t getRefYaw(void) {
-    return refYaw;
-}
-
-
-void setRefYaw(int16_t ref) {
-/*    refYaw = ref;*/
-    foundRef = true;
-}
+static uint8_t targetAlt;
+static int16_t targetYaw;
 
 
 uint8_t getState(void) {
@@ -37,13 +29,25 @@ uint8_t getState(void) {
 }
 
 
-int16_t getAltErr(int16_t tAlt) {
+uint8_t getTargetAlt(void) {
+    return targetAlt;
+}
+
+
+int16_t getTargetYaw(void) {
+    return targetYaw;
+}
+
+
+int16_t getAltErr(void) {
+    uint8_t tAlt = targetAlt;
     return tAlt - getAlt();
 }
 
 
-int16_t getYawErr(int16_t tYaw) {
+int16_t getYawErr(void) {
     int16_t error = 0;
+    int16_t tYaw = targetYaw;
     int16_t currYaw = getYaw();
 
     // Calculates error
@@ -61,6 +65,38 @@ int16_t getYawErr(int16_t tYaw) {
 }
 
 
+void incAlt(void) {
+    if (targetAlt != 100) {
+        targetAlt += 10;
+    }
+}
+
+
+void decAlt(void) {
+    if (targetAlt != 0) {
+        targetAlt -= 10;
+    }
+}
+
+
+void incYaw(void) {
+    if (targetYaw == 345) {
+        targetYaw = 0;
+    } else {
+        targetYaw += 15;
+    }
+}
+
+
+void decYaw(void) {
+    if (targetYaw == 0) {
+        targetYaw = 345;
+    } else {
+        targetYaw -= 15;
+    }
+}
+
+
 void FSM(void* pvParameters){
     //state = LANDED;
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
@@ -68,7 +104,7 @@ void FSM(void* pvParameters){
 
     xTakeOffSemaphore = xSemaphoreCreateBinary();
     xLandSemaphore = xSemaphoreCreateBinary();
-    uint8_t count = 0;
+    //static uint8_t count = 0;
     while(1) {
         switch(state) {
             case LANDED:
@@ -90,14 +126,15 @@ void FSM(void* pvParameters){
                 break;
 
             case LANDING:
-                if (getAlt == 0) {
-                    count++;
-                }
-                // If at 0 alt for half a second
-                if (count >= 40) {
-                    count = 0;
+                if (getAlt() == 0) {
+                    //count++;
                     state = LANDED;
                 }
+                // If at 0 alt for half a second
+/*                if (count >= 40) {
+                    count = 0;
+                    state = LANDED;
+                }*/
                 break;
         }
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
@@ -105,88 +142,77 @@ void FSM(void* pvParameters){
 }
 
 
-void takeOff(void* pvParameters) {
-    uint8_t target = getYaw();
-    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
-    //xTakeOffSemaphore = xSemaphoreCreateBinary();
-    int n = 0;
-
-    //xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
-    while(1) {
-/*        if (state == IN_FLIGHT) {
-            xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
-        }*/
-        //state = TAKE_OFF;
-
+void takeOff(uint16_t* timer) {
+    // If reference not found, find it then take off
+    if (!foundRef) {
         if (!GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
-            refYaw = getYaw();
-            break;
-            //xSemaphoreGive(xFSMSemaphore);
-            //xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
-            //state = IN_FLIGHT;
-            //xSemaphoreGive(xControlSemaphore);
-            //xSemaphoreGive(xButtPollSemaphore);
-            //xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
-            //xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-            //xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
-        } else {
-            if (n >= 250/2) {
-                target+= 5;
-                n =0;
-            }
+            // Ref found
+            setYawReference();
+            targetYaw = 0;
+            //targetAlt = 10;
+            foundRef = true;
 
-            setMotor(MOTOR_T, 15);
-            piTailUpdate(target);
-            n++;
+          // If heli is not facing reference, increment target yaw at a fixed rate
+        } else if (*timer >= CONTROLLER_RATE_HZ / UPDATE_TARGET_RATE_HZ){
+            targetYaw = getYaw() + 5;
+            targetAlt = 10;
+            *timer = 0;
         }
+    } else {
+        // Ref already found
+        targetYaw = 0;
+        targetAlt = 10;
+    }
+}
+
+
+void land(uint16_t* timer) {
+    // Rotate to yaw reference then decrease target alt at a fixed rate
+    targetYaw = 0;
+    int16_t yaw = getYaw();
+    if ((yaw < 5 || yaw > 355) && *timer >= CONTROLLER_RATE_HZ / 1) {
+        if (targetAlt >= 10) {
+            targetAlt -= 10;
+            *timer = 0;
+        }
+    }
+}
+
+
+void controller(void* pvParameters) {
+    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
+
+    uint16_t tick = 0;
+    while(1) {
+        tick++;
+
+        if (state == TAKE_OFF) {
+            takeOff(&tick);
+
+        } else if (state == LANDING) {
+            land(&tick);
+        }
+
+        piMainUpdate();
+        piTailUpdate();
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
 
 
-void land(void* pvParameters) {
-    uint8_t height = 0;
-    //xLandSemaphore = xSemaphoreCreateBinary();
-
-    //xSemaphoreTake(xLandSemaphore, portMAX_DELAY);
-    //xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
-    //xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-    while(1) {
-        //state = LANDING;
-        height = getAlt();
-        if (height > 0) {
-            if (GPIOPinRead(REF_GPIO_BASE, REF_PIN) == 0) {
-                height = 0;
-            } else if (height > 25){
-                height = 25;
-            }
-            piMainUpdate(height);
-            piTailUpdate(refYaw);
-
-        } else {
-            //state = LANDED;
-            //xSemaphoreGive(xButtPollSemaphore);
-            //xSemaphoreGive(xControlSemaphore);
-            //xSemaphoreGive(xFSMSemaphore);
-            //xSemaphoreTake(xLandSemaphore, portMAX_DELAY);
-            break;
-        }
-    }
-}
-
-
-void piMainUpdate(uint8_t setAlt) {
+void piMainUpdate(void) {
     int control;
     int error;
     static int dI;
     static int lastTarget = 0;
+    int tAlt = targetAlt;
 
-    if (lastTarget != setAlt) {
-        dI = 0;
+    if (lastTarget != tAlt) {
+        //dI = 0;
     }
 
-    error = getAltErr(setAlt); // Error between the set altitude and the actual altitude
+    error = getAltErr(); // Error between the set altitude and the actual altitude
     dI += error*T_DELTA * 1000;
 
     control = KP_M*error + KI_M*dI / 1000;
@@ -198,22 +224,23 @@ void piMainUpdate(uint8_t setAlt) {
         control = OUTPUT_MIN;
     }
 
-    lastTarget = setAlt;
+    lastTarget = tAlt;
     setMotor(MOTOR_M, control);
 }
 
 
-void piTailUpdate(int16_t setYaw) {
+void piTailUpdate(void) {
     int control;
     int error;
     static int dI;
     static int lastTarget = 0;
+    int tYaw = targetYaw;
 
-    if (lastTarget != setYaw) {
+    if (lastTarget != tYaw) {
         dI = 0;
     }
 
-    error = getYawErr(setYaw); // Error between the set altitude and the actual altitude
+    error = getYawErr(); // Error between the set altitude and the actual altitude
     dI += error * T_DELTA * 1000;
 
     control = KP_T*error + KI_T*dI / 1000;
@@ -224,6 +251,6 @@ void piTailUpdate(int16_t setYaw) {
     } else if (control < OUTPUT_MIN) {
         control = OUTPUT_MIN;
     }
-    lastTarget = setYaw;
+    lastTarget = tYaw;
     setMotor(MOTOR_T, control);
 }

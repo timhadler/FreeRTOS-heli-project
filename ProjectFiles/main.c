@@ -36,185 +36,41 @@
 #include "myYaw.h"
 #include "altitude.h"
 #include "controllers.h"
+#include "userInput.h"
 
 
 //******************************************************************
 // Global Variables
 //******************************************************************
-static uint8_t targetAlt;
-static int16_t targetYaw;
+//static uint8_t targetAlt;
+//static int16_t targetYaw;
 
 //static int16_t refYaw;
 
 //******************************************************************
 // Functions
 //******************************************************************
-void SwitchModeIntHandler(void) {
-    int32_t mSwitch = 0;
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-    // Wait for switch to settle, prolly bad practice to put delay in ISR
-    SysCtlDelay (SysCtlClockGet () / 150);
-
-    mSwitch = GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
-    if (getState() == LANDED && mSwitch) {
-        xSemaphoreGiveFromISR(xTakeOffSemaphore, &xHigherPriorityTaskWoken);
-    } else if (getState() == IN_FLIGHT && !mSwitch) {
-        xSemaphoreGiveFromISR(xLandSemaphore, &xHigherPriorityTaskWoken);
-    }
-
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    GPIOIntClear(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
-}
-
-
 void displayOLED(void* pvParameters) {
     const uint16_t delay_ms = 1000/DISPLAY_RATE_HZ;
 
     char text_buffer[16];
     while(1) {
         // Display Height
-        sprintf(text_buffer, "Altitude: %d%%", getAlt());
+        sprintf(text_buffer, "Altitude: %d%%", getState());
         writeDisplay(text_buffer, LINE_1);
         // Display yaw
         sprintf(text_buffer, "Yaw: %d", getYaw());
         writeDisplay(text_buffer, LINE_2);
         // Target height
-        sprintf(text_buffer, "Target Alt: %d%%", targetAlt);
+        sprintf(text_buffer, "Target Alt: %d%%", getTargetAlt());
         writeDisplay(text_buffer, LINE_3);
         // Target yaw
-        sprintf(text_buffer, "Target Yaw: %d", targetYaw);
+        sprintf(text_buffer, "Target Yaw: %d", getTargetYaw());
         writeDisplay(text_buffer, LINE_4);
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
-
-
-void pollModeSwitch(void* pvParameters) {
-    uint8_t state;
-    int32_t mode;
-    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
-
-    while(1) {
-        state = getState();
-        mode = GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
-        // Mode Switch
-        if (mode != 0){
-/*            if (state == LANDED) {
-                xSemaphoreGive(xTakeOffSemaphore);
-            }*/
-        }
-        if (mode == 0){
-            if (state == IN_FLIGHT) {
-                xSemaphoreGive(xLandSemaphore);
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
-void pollButton(void* pvParameters) {
-    const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
-    xButtPollSemaphore = xSemaphoreCreateBinary();
-
-    //xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
-    while (1) {
-        if (getState() != IN_FLIGHT) {
-            xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
-        }
-
-        updateButtons();
-        if (checkButton (UP) == PUSHED) {
-            if (targetAlt != 100) {
-                targetAlt += 10;
-            }
-
-        } else if (checkButton (DOWN) == PUSHED) {
-            if (!targetAlt == 0){
-                targetAlt -= 10;
-            }
-
-        } else if (checkButton (LEFT) == PUSHED) {
-            if (targetYaw == 0) {
-                targetYaw = 345;
-            } else {
-                targetYaw -= 15;
-            }
-
-        } else if (checkButton (RIGHT) == PUSHED) {
-            if (targetYaw == 345) {
-                targetYaw = 0;
-            } else {
-                targetYaw += 15;
-            }
-        }
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
-
-
-void controller(void* pvParameters) {
-    //xControlSemaphore = xSemaphoreCreateBinary();
-    const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
-    int16_t yaw = 0;
-    //xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-
-    bool refFound = false;
-    uint16_t tick = 0;
-    while(1) {
-        tick++;
-/*        st = getState();
-        if (st == LANDING || st == TAKE_OFF) {
-            //xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-            targetYaw = getRefYaw();
-            targetAlt = 10;
-        }*/
-
-        if (getState() == TAKE_OFF) {
-            // If reference not found, find it then take off
-            if (!refFound) {
-                if (!GPIOPinRead(REF_GPIO_BASE, REF_PIN)) {
-                    // Ref found
-                    setRefYaw(22);
-                    setYawReference();
-                    targetYaw = 0;
-                    //targetAlt = 10;
-                    refFound = true;
-
-                  // If heli is not facing reference, increment target yaw at a fixed rate
-                } else if (tick >= CONTROLLER_RATE_HZ / UPDATE_TARGET_RATE_HZ){
-                    targetYaw = getYaw() + 5;
-                    targetAlt = 10;
-                    tick = 0;
-                }
-            } else {
-                // Ref already found
-                targetYaw = 0;
-                targetAlt = 10;
-            }
-
-        } else if (getState() == LANDING) {
-            // Rotate to yaw reference then decrease target alt at a fixed rate
-            targetYaw = 0;//getRefYaw();
-            yaw = getYaw();
-            if ((yaw < 5 || yaw > 355) && tick >= CONTROLLER_RATE_HZ / 1) {
-                if (targetAlt >= 10) {
-                    targetAlt -= 10;
-                    tick = 0;
-                }
-            }
-        }
-
-        piMainUpdate(targetAlt);
-        piTailUpdate(targetYaw);
-
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-    }
-}
-
 
 
 //**********************************************************************
@@ -253,32 +109,17 @@ void sendData(void* pvParameters) {
 
         } else if (heliState == IN_FLIGHT) {
             stateStr = "In flight";
-
-        } else {
-            stateStr = "Intd state";
         }
 
         // Form and send a status message to the console
-        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), targetAlt); // * usprintf
+        sprintf (statusStr, "Alt %d [%d] \r\n", getAlt(), getTargetAlt()); // * usprintf
         UARTSend (statusStr);
-        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), targetYaw); // * usprintf
+        sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), getTargetYaw()); // * usprintf
         UARTSend (statusStr);
         sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
         UARTSend (statusStr);
         sprintf(statusStr, "Mode: %s \r\n", stateStr);
         UARTSend (statusStr);
-
-
-/*        if (heli_state == landing) {
-            usprintf (statusStr, "Mode landing \r\n");
-        } else if (heli_state == landed) {
-            usprintf (statusStr, "Mode landed \r\n");
-        } else if (heli_state == take_off) {
-            usprintf (statusStr, "Mode take off \r\n");
-        } else {
-            usprintf (statusStr, "Mode in flight \r\n");
-        }
-        UARTSend (statusStr);*/
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
@@ -291,25 +132,7 @@ void createTasks(void) {
     xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
     xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
     xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
-    //xTaskCreate(takeOff, "Take off sequence", 56, (void *) NULL, 3, NULL);
-    //xTaskCreate(land, "Landing sequence", 150, (void *) NULL, 3, NULL);
-    //xTaskCreate(pollModeSwitch, "Mode Switch Poll", 200, (void *) NULL, 6, NULL);
     xTaskCreate(FSM, "Finite State Machine", 150, (void *) NULL, 4, NULL);
-}
-
-
-void initModeSwitch(void) {
-    // initialize mode switch
-    SysCtlPeripheralEnable(MODE_PERIPH_GPIO);
-    GPIOPinTypeGPIOInput (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
-    GPIOPadConfigSet (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN, GPIO_STRENGTH_2MA,
-          GPIO_PIN_TYPE_STD_WPD);
-
-    // Set up mode switch interrupts
-    // Interrupt on both edges
-    GPIOIntTypeSet(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN, GPIO_BOTH_EDGES);
-    GPIOIntRegister(SWITCH_MODE_GPIO_BASE, SwitchModeIntHandler);
-    GPIOIntEnable(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN);
 }
 
 
