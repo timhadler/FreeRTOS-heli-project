@@ -173,9 +173,9 @@ void mode2 (void) {
 
     } else {
         if (clockwise) {
-            targetYaw = tYawRef + 30;
+            targetYaw = tYawRef + 15;
         } else {
-            targetYaw = tYawRef - 30;
+            targetYaw = tYawRef - 15;
         }
         if (cYaw < (targetYaw + 5) && cYaw > (targetYaw - 5)) {
             if (n < 4) {
@@ -253,7 +253,7 @@ void controller(void* pvParameters) {
                         //incYaw();
                         targetYaw = tYaw;
                     } else if (targetYaw > tYaw) {
-                        //decYaw();
+                        decYaw();
                         targetYaw = tYaw;
                     } else {
                         mode1_flag = false;
@@ -276,16 +276,17 @@ void controller(void* pvParameters) {
 
 void piMainUpdate(void) {
     int control;
-    int error;
+    int error=0;
     static int dI;
     int P;
+    int I;
 
     error = getAltErr(targetAlt); // Error between the set altitude and the actual altitude
     dI += error*T_DELTA * 1000;
 
-    P = CLAMP(KP_M*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
-    //I = CLAMP(KI_M*error, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
-    control = P + KI_M*dI / 1000;
+    P = CLAMP(KP_M*error, -20, 20);
+    I = CLAMP(KI_M*dI/1000, -40, 40);
+    control = P + I;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
@@ -303,12 +304,13 @@ void piTailUpdate(void) {
     int error;
     static int dI;
     int P;
+    int I;
     error = getYawErr(targetYaw); // Error between the set altitude and the actual altitude
     dI += error * T_DELTA * 1000;
 
     P = CLAMP(KP_T*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
-    //I = CLAMP(KI_T*dI/1000, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
-    control = P + KI_T*dI/1000;
+    I = CLAMP(KI_T*dI/1000, -30, 30);
+    control = P + I;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
