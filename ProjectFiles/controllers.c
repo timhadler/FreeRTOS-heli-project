@@ -120,7 +120,7 @@ int16_t getYawErr(int16_t tYaw) {
 void FSM(void* pvParameters){
     //state = LANDED;
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
-    //int16_t yaw = 0;
+    int16_t yaw = 0;
 
     xTakeOffSemaphore = xSemaphoreCreateBinary();
     xLandSemaphore = xSemaphoreCreateBinary();
@@ -128,16 +128,16 @@ void FSM(void* pvParameters){
     while(1) {
         switch(state) {
             case LANDED:
-                //xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
+                xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
                 state = TAKE_OFF;
                 break;
 
             case TAKE_OFF:
-                //yaw = getYaw();
-                //if (foundRef && (yaw <= 5 || yaw >= 355) && getAlt() > 8) {
+                yaw = getYaw();
+                if (foundRef && (yaw <= 5 || yaw >= 355) && getAlt() > 8) {
                     state = IN_FLIGHT;
                     xSemaphoreGive(xButtPollSemaphore);
-                //}
+                }
                 break;
 
             case IN_FLIGHT:
@@ -250,11 +250,11 @@ void controller(void* pvParameters) {
                     tick = 0;
                     if (targetYaw < tYaw) {
                         //targetYaw = yaw + 15;
-                        //incYaw();
-                        targetYaw = tYaw;
+                        incYaw();
+                        //targetYaw = tYaw;
                     } else if (targetYaw > tYaw) {
                         decYaw();
-                        targetYaw = tYaw;
+                        //targetYaw = tYaw;
                     } else {
                         mode1_flag = false;
                         tYaw = 500;
