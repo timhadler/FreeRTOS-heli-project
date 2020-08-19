@@ -22,9 +22,9 @@
 #define REF_PIN GPIO_PIN_4
 
 #define KP_M 1.5
-#define KI_M 0.3
-#define KP_T 2
-#define KI_T 0.2
+#define KI_M 0.5
+#define KP_T 1
+#define KI_T 0.5
 #define T_DELTA 0.01
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
@@ -32,6 +32,7 @@
 #define UPDATE_TARGET_RATE_HZ 3
 
 #define BUTTON_POLL_RATE_HZ 60
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 
 enum heliStates {LANDED=0, LANDING, TAKE_OFF, IN_FLIGHT};

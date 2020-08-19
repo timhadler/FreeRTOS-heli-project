@@ -120,11 +120,11 @@ int16_t getYawErr(int16_t tYaw) {
 void FSM(void* pvParameters){
     //state = LANDED;
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
-    int16_t yaw = 0;
+    //int16_t yaw = 0;
 
     xTakeOffSemaphore = xSemaphoreCreateBinary();
     xLandSemaphore = xSemaphoreCreateBinary();
-    uint8_t count = 0;
+    //uint8_t count = 0;
     while(1) {
         switch(state) {
             case LANDED:
@@ -133,7 +133,7 @@ void FSM(void* pvParameters){
                 break;
 
             case TAKE_OFF:
-                yaw = getYaw();
+                //yaw = getYaw();
                 //if (foundRef && (yaw <= 5 || yaw >= 355) && getAlt() > 8) {
                     state = IN_FLIGHT;
                     xSemaphoreGive(xButtPollSemaphore);
@@ -178,11 +178,12 @@ void mode2 (void) {
             targetYaw = tYawRef - 30;
         }
         if (cYaw < (targetYaw + 5) && cYaw > (targetYaw - 5)) {
-            if (n < 8) {
+            if (n < 4) {
                 clockwise =!clockwise;
                 n++;
             } else {
                 mode2_flag = false;
+                targetYaw = tYawRef;
                 tYawRef = 500;
                 n = 0;
             }
@@ -275,12 +276,14 @@ void piMainUpdate(void) {
     int control;
     int error;
     static int dI;
-
+    int P;
 
     error = getAltErr(targetAlt); // Error between the set altitude and the actual altitude
     dI += error*T_DELTA * 1000;
 
-    control = KP_M*error + KI_M*dI / 1000;
+    P = CLAMP(KP_M*error, 5, 30);
+
+    control = P + KI_M*dI / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
@@ -297,11 +300,13 @@ void piTailUpdate(void) {
     int control;
     int error;
     static int dI;
+    int P;
 
     error = getYawErr(targetYaw); // Error between the set altitude and the actual altitude
     dI += error * T_DELTA * 1000;
 
-    control = KP_T*error + KI_T*dI / 1000;
+    P = CLAMP(KP_T*error, 5, 35);
+    control = P + KI_T*dI / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {

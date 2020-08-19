@@ -200,10 +200,11 @@ void initialize(void) {
     GPIOPadConfigSet (REF_GPIO_BASE, REF_PIN, GPIO_STRENGTH_4MA,
        GPIO_PIN_TYPE_STD_WPD);
 
-    GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
+
+/*    GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
     GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
+    GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);*/
 
     IntMasterEnable();
 }
