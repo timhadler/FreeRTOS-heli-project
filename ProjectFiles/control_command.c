@@ -63,7 +63,7 @@ decrAlt(void)
 void
 incrYaw(void)
 {
-    if (targetYaw == 345) {
+    if (targetYaw >= 345) {
         targetYaw = 0;
     } else {
         targetYaw += 15;
@@ -75,7 +75,7 @@ incrYaw(void)
 void
 decrYaw(void)
 {
-    if (targetYaw == 0) {
+    if (targetYaw <= 0) {
            targetYaw = 345;
     } else {
            targetYaw -= 15;
@@ -109,7 +109,7 @@ void no_nod(void)
             targetYawRef = getCurrentYaw() - 60;
         }
     }
-    if (count == 500) {
+    if (current_yaw < (m2targetYaw + 5)) && (current_yaw > (m2targetYaw -5)) {
         current_yaw = getYaw();
         m2targetYaw = current_yaw + 10;
         //dprintf ("m2y %d \n", m2targetYaw);
@@ -134,7 +134,7 @@ void no_nod(void)
 void oneeighty_midalt(void)
 {
     static int32_t m1targetYaw;
-    static int32_t m1targetAlt;
+    //static int32_t m1targetAlt;
 
     if (targetYawRef == UNDEFINED_YAW) {
         targetYawRef = getYaw() + 180;
@@ -144,20 +144,21 @@ void oneeighty_midalt(void)
     }
     current_yaw = getYaw();
 
-    if (count == 50) {
+    if ((current_yaw > (targetYawRef - 10)  && current_yaw < (targetYawRef + 10)) == 0) {
         current_yaw = getYaw();
         //m1targetAlt = 50;
-        m1targetYaw = current_yaw + 5;
+        m1targetYaw = targetYawRef;
         dprintf ("m1 target Yaw %d \n", m1targetYaw);
         dprintf("target180 %d \n", targetYawRef);
-        count = 0;
-    } else if ((current_yaw > (targetYawRef - 10)  && current_yaw < (targetYawRef + 10)) == 1) {
+        piMainUpdate(targetAlt);
+        piTailUpdate(m1targetYaw);
+        //count = 0;
+    } else {
         current_yaw = UNDEFINED_YAW;
         targetYawRef = UNDEFINED_YAW;
         mode1 = false;
+        count = 0;
     }
-    piMainUpdate(targetAlt);
-    piTailUpdate(m1targetYaw);
 }
 
 
@@ -169,7 +170,7 @@ void controller_command(void* pvParameters) {
     targetYaw = getReference();
     while(1) {
 
-        if (count > 1000 && mode1 == false) {
+        if (count > 200 && mode1 == false) {
             mode1 = true;
             count = 0;
         }

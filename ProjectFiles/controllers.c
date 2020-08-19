@@ -38,11 +38,14 @@ int16_t getYawErr(int16_t tYaw) {
     // Calculates error
     if (tYaw > 260 && currYaw < 90) {
         error = tYaw - 360 - currYaw;
+        dprintf("c1 error %d", error);
 
     } else if (tYaw < 90 && currYaw > 260) {
         error = 360 - currYaw + tYaw;
+        dprintf("c2 error %d", error);
 
     } else {
+        dprintf("c2 error");
         error = tYaw - currYaw;
     }
 
@@ -109,7 +112,7 @@ void piMainUpdate(uint8_t setAlt) {
     setMotor(MOTOR_M, control);
 
     if (counter ==  2000) {
-        //dprintf ("CAlt %d \n", getAlt());
+        dprintf ("CAlt %d \n", getAlt());
         counter = 0;
     }
 }
@@ -141,9 +144,10 @@ void piTailUpdate(int16_t setYaw) {
         I += dI; // Accumulates the a history of the error in the integral
     }
     setMotor(MOTOR_T, control);
+    //dprintf("PWM TAIL")
 
-    if (counter == 20) {
-        //dprintf ("CYaw %d \n", getYaw());
+    if (counter == 50) {
+        dprintf ("CYaw %d \n", getYaw());
         counter = 0;
     }
     counter++;
