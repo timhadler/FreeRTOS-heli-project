@@ -44,8 +44,8 @@
 //******************************************************************
 //static uint8_t targetAlt;
 //static int16_t targetYaw;
-
 //static int16_t refYaw;
+//static TaskHandle_t XD;
 
 //******************************************************************
 // Functions
@@ -127,12 +127,12 @@ void sendData(void* pvParameters) {
 
 
 void createTasks(void) {
-    xTaskCreate(pollButtons, "Button Poll", 200, (void *) NULL, 3, NULL);
-    xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
-    xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
-    xTaskCreate(FSM, "Finite State Machine", 150, (void *) NULL, 4, NULL);
+    xTaskCreate(pollButtons, "Button Poll", 64, (void *) NULL, 3, NULL);
+    xTaskCreate(displayOLED, "display", 256, (void *) NULL, 3, NULL);
+    xTaskCreate(controller, "controller", 64, (void *) NULL, 2, NULL);
+    xTaskCreate(processAlt, "Altitude Calc", 64, (void *) NULL, 4, NULL);
+    xTaskCreate(sendData, "UART", 256, (void *) NULL, 5, NULL);
+    xTaskCreate(FSM, "Finite State Machine", 64, (void *) NULL, 4, NULL);
 }
 
 
