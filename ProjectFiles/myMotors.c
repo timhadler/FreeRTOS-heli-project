@@ -15,21 +15,18 @@
 #include "driverlib/pwm.h"
 #include "myMotors.h"
 
-
+//******************************************************************
+// Global Variables
+//******************************************************************
 motor_t mainMotor;
 motor_t tailMotor;
-
 uint32_t periodPWM;         // Period for the PWM
 
-
-
-
+//******************************************************************
+// Functions
+//******************************************************************
 uint8_t getPWM(void) {
     uint8_t duty = tailMotor.duty;
-
-    //setMotor(1, 45);
-
-
     return duty;
 }
 

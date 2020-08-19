@@ -3,6 +3,8 @@
     Last modified: 8.8.2020 */
 
 #include <stdint.h>
+#include <stdio.h>
+#include <math.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
@@ -15,8 +17,16 @@
 #include "altitude.h"
 
 
-/* Sets variables */
-static int8_t altitude = 0;
+
+//******************************************************************
+// Global Variables
+//******************************************************************
+static uint32_t altitude = 0;
+
+//******************************************************************
+// FreeRTOS Variables
+//******************************************************************
+
 /* FreeRTOS variables*/
 static TimerHandle_t Alt_IN_Timer;
 static QueueHandle_t Alt_IN_Queue;
@@ -53,7 +63,7 @@ void initADC (void) {
         while(1);
     }
     /* Create a FreeRTOS queue for average mean of ADC readings */
-    Alt_IN_Queue = xQueueCreate(Alt_IN_QUEUE_SIZE, QUEUE_ITEM_SIZE);
+    Alt_IN_Queue = xQueueCreate(Alt_QUEUE_SIZE, QUEUE_ITEM_SIZE);
     if(Alt_IN_Queue == NULL){
         while(1);
     }
@@ -93,6 +103,13 @@ uint8_t getAlt(void){
     return altitude;
 }
 
+/* Returns the mid altitude point in percentage */
+uint32_t getMidAlt(void){
+    //((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+    return round(minAlt + ((maxAlt - minAlt) / 2));
+}
+
+
 /* Calculates the average mean of ADC readings and altitude of the helicopter from a FreeRTOS queue*/
 void processAlt(void* pvParameter) {
     uint32_t temp = 0;
@@ -107,6 +124,22 @@ void processAlt(void* pvParameter) {
     xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
     while(1){
+<<<<<<< HEAD
+        if(xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY)){
+            sum = 0;
+            for (i = 0; i < Alt_QUEUE_SIZE; i++) {
+                sum = sum + temp;
+            }
+            meanVal = (2 * sum + Alt_QUEUE_SIZE) / 2 / Alt_QUEUE_SIZE;
+            // Creates a delay so there are values in the buffer to use for the landed value
+            if (n == Alt_QUEUE_SIZE) {
+                    altLandedValue = meanVal;
+                    n++;
+            } else if (n < Alt_QUEUE_SIZE) {
+                    n++;
+            }
+            altitude = ((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+=======
         xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY);
         sum += temp;
         count++;
@@ -128,6 +161,7 @@ void processAlt(void* pvParameter) {
             altitude = 100;
         } else if (altitude < 0) {
             altitude = 0;
+>>>>>>> 1b2657cce665c5c46de2df355733ecd426b72b33
         }
     }
 }
