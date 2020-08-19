@@ -32,7 +32,6 @@
 #define UPDATE_TARGET_RATE_HZ 3
 
 #define BUTTON_POLL_RATE_HZ 60
-#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 #define MIN(a, b) (((a) < (b) ? (a) : (b)))    // This next 3 defines are macros (values/expressions - in other word a text copy replacement) -->
 #define MAX(a, b) (((a) > (b) ? (a) : (b)))    // that would limit the proportional gain to a minimum, maximum, or in between a min and max limit
