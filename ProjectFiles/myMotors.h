@@ -11,11 +11,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//******************************************************************
-// Constants / Macros
-//******************************************************************
-#define PWM_CLOCK_DIVIDER    SYSCTL_PWMDIV_16
-#define PWM_DIVIDER          16
+//*****************************************************************************
+// Constants
+//*****************************************************************************
+#define PWM_CLOCK_DIVIDER SYSCTL_PWMDIV_16
+#define PWM_DIVIDER 16
 
 //  PWM Hardware Details M0PWM7 (gen 3)
 //  ---Main Rotor PWM: PC5, J4-05
@@ -28,6 +28,7 @@
 #define PWM_MAIN_GPIO_BASE   GPIO_PORTC_BASE
 #define PWM_MAIN_GPIO_CONFIG GPIO_PC5_M0PWM7
 #define PWM_MAIN_GPIO_PIN    GPIO_PIN_5
+
 #define PWM_TAIL_BASE        PWM1_BASE
 #define PWM_TAIL_GEN         PWM_GEN_2
 #define PWM_TAIL_OUTNUM      PWM_OUT_5
@@ -37,8 +38,9 @@
 #define PWM_TAIL_GPIO_BASE   GPIO_PORTF_BASE
 #define PWM_TAIL_GPIO_CONFIG GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
-#define PWM_FREQ_HZ          100
-#define PWM_START_DUTY       5
+
+#define PWM_FREQ_HZ 100
+#define PWM_START_DUTY 5
 
 
 // Struct declaration
@@ -55,14 +57,11 @@ enum motorType {MOTOR_T=0, MOTOR_M};
 //*****************************************************************************
 // Funtion declarations
 //*****************************************************************************
-void
-initMotors(void);
+void initMotors(void);
 
-uint8_t
-getPWM(void);
+uint8_t getPWM(void);
 
-void
-setMotor(uint8_t main, uint8_t duty);
+void setMotor(uint8_t main, uint8_t duty);
 
 
 #endif /* MYMOTORS_H_ */

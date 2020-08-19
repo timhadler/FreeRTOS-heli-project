@@ -26,7 +26,7 @@ static uint8_t seq2_pos;
 
 enum buttStates {IDLE=0, ST_1, ST_2, ST_3, ST_4};
 
-static uint8_t state;
+//static uint8_t state;
 
 
 void SwitchModeIntHandler(void) {
@@ -137,8 +137,10 @@ void pollButtons(void* pvParameters) {
 
         if (seq == SEQUENCE_1) {
             setMode1();
+            seq = 0;
         } else if (seq == SEQUENCE_2) {
             setMode2();
+            seq = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

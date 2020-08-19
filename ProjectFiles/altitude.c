@@ -3,8 +3,6 @@
     Last modified: 8.8.2020 */
 
 #include <stdint.h>
-#include <stdio.h>
-#include <math.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/sysctl.h"
@@ -17,16 +15,8 @@
 #include "altitude.h"
 
 
-
-//******************************************************************
-// Global Variables
-//******************************************************************
-static uint32_t altitude = 0;
-
-//******************************************************************
-// FreeRTOS Variables
-//******************************************************************
-
+/* Sets variables */
+static int8_t altitude = 0;
 /* FreeRTOS variables*/
 static TimerHandle_t Alt_IN_Timer;
 static QueueHandle_t Alt_IN_Queue;
@@ -63,7 +53,7 @@ void initADC (void) {
         while(1);
     }
     /* Create a FreeRTOS queue for average mean of ADC readings */
-    Alt_IN_Queue = xQueueCreate(Alt_QUEUE_SIZE, QUEUE_ITEM_SIZE);
+    Alt_IN_Queue = xQueueCreate(Alt_IN_QUEUE_SIZE, QUEUE_ITEM_SIZE);
     if(Alt_IN_Queue == NULL){
         while(1);
     }
@@ -102,13 +92,6 @@ void initADC (void) {
 uint8_t getAlt(void){
     return altitude;
 }
-
-/* Returns the mid altitude point in percentage */
-uint32_t getMidAlt(void){
-    //((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
-    return round(minAlt + ((maxAlt - minAlt) / 2));
-}
-
 
 /* Calculates the average mean of ADC readings and altitude of the helicopter from a FreeRTOS queue*/
 void processAlt(void* pvParameter) {

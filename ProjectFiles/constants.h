@@ -28,6 +28,7 @@
 #define UART_SEND_RATE_HZ 4
 #define MAX_HEIGHT 962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
 
+
 // LED constants
 #define LED_GPIO_BASE GPIO_PORTF_BASE
 #define LED_RED_PIN GPIO_PIN_1
