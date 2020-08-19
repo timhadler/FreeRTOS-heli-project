@@ -22,9 +22,9 @@
 #define REF_PIN GPIO_PIN_4
 
 #define KP_M 1.5
-#define KI_M 0.3
-#define KP_T 2
-#define KI_T 0.2
+#define KI_M 0.5
+#define KP_T 1
+#define KI_T 0.5
 #define T_DELTA 0.01
 #define OUTPUT_MAX 95
 #define OUTPUT_MIN 5
@@ -32,6 +32,7 @@
 #define UPDATE_TARGET_RATE_HZ 3
 
 #define BUTTON_POLL_RATE_HZ 60
+#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 #define MIN(a, b) (((a) < (b) ? (a) : (b)))    // This next 3 defines are macros (values/expressions - in other word a text copy replacement) -->
 #define MAX(a, b) (((a) > (b) ? (a) : (b)))    // that would limit the proportional gain to a minimum, maximum, or in between a min and max limit
