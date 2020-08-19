@@ -124,22 +124,6 @@ void processAlt(void* pvParameter) {
     xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
     while(1){
-<<<<<<< HEAD
-        if(xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY)){
-            sum = 0;
-            for (i = 0; i < Alt_QUEUE_SIZE; i++) {
-                sum = sum + temp;
-            }
-            meanVal = (2 * sum + Alt_QUEUE_SIZE) / 2 / Alt_QUEUE_SIZE;
-            // Creates a delay so there are values in the buffer to use for the landed value
-            if (n == Alt_QUEUE_SIZE) {
-                    altLandedValue = meanVal;
-                    n++;
-            } else if (n < Alt_QUEUE_SIZE) {
-                    n++;
-            }
-            altitude = ((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
-=======
         xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY);
         sum += temp;
         count++;
@@ -161,7 +145,6 @@ void processAlt(void* pvParameter) {
             altitude = 100;
         } else if (altitude < 0) {
             altitude = 0;
->>>>>>> 1b2657cce665c5c46de2df355733ecd426b72b33
         }
     }
 }
