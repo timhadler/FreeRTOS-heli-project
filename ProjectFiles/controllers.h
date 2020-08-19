@@ -23,7 +23,7 @@
 
 #define KP_M 1.5
 #define KI_M 0.3
-#define KP_T 1
+#define KP_T 2
 #define KI_T 0.2
 #define T_DELTA 0.01
 #define OUTPUT_MAX 95

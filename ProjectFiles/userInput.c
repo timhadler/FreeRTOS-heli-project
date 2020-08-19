@@ -137,8 +137,10 @@ void pollButtons(void* pvParameters) {
 
         if (seq == SEQUENCE_1) {
             setMode1();
+            seq = 0;
         } else if (seq == SEQUENCE_2) {
             setMode2();
+            seq = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

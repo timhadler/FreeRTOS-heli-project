@@ -162,14 +162,30 @@ void FSM(void* pvParameters){
 }
 
 
-void mode1 (void) {
-    static int16_t tYaw = 0;
+void mode2 (void) {
+    static bool clockwise = true;
+    static int n = 0;
+    static int16_t tYawRef = 500;
     int16_t cYaw = getYaw();
-    if (tYaw == 0) {
-        if (cYaw < 180) {
-            targetYaw = cYaw + 180;
+
+    if (tYawRef == 500) {
+        tYawRef = targetYaw;
+
+    } else {
+        if (clockwise) {
+            targetYaw = tYawRef + 30;
         } else {
-            targetYaw = cYaw - 180;
+            targetYaw = tYawRef - 30;
+        }
+        if (cYaw < (targetYaw + 5) && cYaw > (targetYaw - 5)) {
+            if (n < 8) {
+                clockwise =!clockwise;
+                n++;
+            } else {
+                mode2_flag = false;
+                tYawRef = 500;
+                n = 0;
+            }
         }
     }
 }
@@ -180,7 +196,7 @@ void controller(void* pvParameters) {
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
     int16_t yaw = 0;
     //xSemaphoreTake(xControlSemaphore, portMAX_DELAY);
-    int16_t tYaw = 0;
+    int16_t tYaw = 500;
     foundRef = false;
     uint16_t tick = 0;
     while(1) {
@@ -221,15 +237,28 @@ void controller(void* pvParameters) {
         } else if (state == IN_FLIGHT) {
             if (mode1_flag) {
                 yaw = getYaw();
-                if (tYaw == 0) {
-                    if (yaw < 180) {
-                        tYaw = yaw + 180;
+                if (tYaw == 500) {
+                    if (targetYaw < 180) {
+                        tYaw = targetYaw + 180;
+                        //tYaw = tYaw - tYaw % 15;
                     } else {
-                        tYaw = yaw - 180;
+                        tYaw = targetYaw - 180;
+                        //tYaw = tYaw - tYaw % 15;
                     }
-                } else if (yaw < (tYaw - 15) && tick >= CONTROLLER_RATE_HZ/2) {
-                     targetYaw = yaw + 15;
+                } else if (tick >= CONTROLLER_RATE_HZ/1) {
+                    tick = 0;
+                    if (targetYaw < tYaw) {
+                        //targetYaw = yaw + 15;
+                        incYaw();
+                    } else if (targetYaw > tYaw) {
+                        decYaw();
+                    } else {
+                        mode1_flag = false;
+                        tYaw = 500;
+                    }
                 }
+            } else if (mode2_flag) {
+                mode2();
             }
         }
 
