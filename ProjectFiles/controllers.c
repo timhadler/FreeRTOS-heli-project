@@ -250,9 +250,11 @@ void controller(void* pvParameters) {
                     tick = 0;
                     if (targetYaw < tYaw) {
                         //targetYaw = yaw + 15;
-                        incYaw();
+                        //incYaw();
+                        targetYaw = tYaw;
                     } else if (targetYaw > tYaw) {
-                        decYaw();
+                        //decYaw();
+                        targetYaw = tYaw;
                     } else {
                         mode1_flag = false;
                         tYaw = 500;
