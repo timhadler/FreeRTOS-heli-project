@@ -284,7 +284,7 @@ void piMainUpdate(void) {
 
     P = CLAMP(KP_M*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
     I = CLAMP(KI_M*error, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
-    control = P + I / 1000;
+    control = P + (I + dI) / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
@@ -308,7 +308,7 @@ void piTailUpdate(void) {
 
     P = CLAMP(KP_M*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
     I = CLAMP(KI_M*error, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
-    control = P + I / 1000;
+    control = P + (I + dI) / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
