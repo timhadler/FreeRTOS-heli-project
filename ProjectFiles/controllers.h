@@ -23,7 +23,7 @@
 
 #define KP_M 1.5
 #define KI_M 0.5
-#define KP_T 1
+#define KP_T 1.15
 #define KI_T 0.5
 #define T_DELTA 0.01
 #define OUTPUT_MAX 95
@@ -36,8 +36,8 @@
 #define MIN(a, b) (((a) < (b) ? (a) : (b)))    // This next 3 defines are macros (values/expressions - in other word a text copy replacement) -->
 #define MAX(a, b) (((a) > (b) ? (a) : (b)))    // that would limit the proportional gain to a minimum, maximum, or in between a min and max limit
 #define CLAMP(Z, MN, MX) (MIN(MAX((MN), (Z)), (MX)))
-#define MAXIMUM_P_CONTROL 20    // maximum proportional gain
-#define MAXIMUM_I_CONTROL 20    // maximum integral gain
+#define MAXIMUM_P_CONTROL 30   // maximum proportional gain
+#define MAXIMUM_I_CONTROL 30   // maximum integral gain
 
 
 enum heliStates {LANDED=0, LANDING, TAKE_OFF, IN_FLIGHT};
