@@ -279,13 +279,14 @@ void piMainUpdate(void) {
     int error;
     static int dI;
     int P;
+    int I;
 
     error = getAltErr(targetAlt); // Error between the set altitude and the actual altitude
     dI += error*T_DELTA * 1000;
 
-    P = CLAMP(KP_M*error, 5, 30);
-
-    control = P + KI_M*dI / 1000;
+    P = CLAMP(KP_M*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
+    I = CLAMP(KI_M*error, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
+    control = P + (I + dI) / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
@@ -303,12 +304,13 @@ void piTailUpdate(void) {
     int error;
     static int dI;
     int P;
-
+    int I;
     error = getYawErr(targetYaw); // Error between the set altitude and the actual altitude
     dI += error * T_DELTA * 1000;
 
-    P = CLAMP(KP_T*error, 5, 35);
-    control = P + KI_T*dI / 1000;
+    P = CLAMP(KP_M*error, -MAXIMUM_P_CONTROL, MAXIMUM_P_CONTROL);
+    I = CLAMP(KI_M*error, -MAXIMUM_I_CONTROL, MAXIMUM_I_CONTROL);
+    control = P + (I + dI) / 1000;
 
     // Enforces output limits
     if (control > OUTPUT_MAX) {
