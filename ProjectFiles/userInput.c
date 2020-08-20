@@ -5,31 +5,10 @@
  *      Author: tch118
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-#include "driverlib/gpio.h"
-#include "driverlib/sysctl.h"
-#include "inc/hw_memmap.h"
-#include "buttons4.h"
-#include "controllers.h"
 #include "userInput.h"
 
-static uint8_t sequence_1[SEQUENCE_LENGTH] = {UP, UP, DOWN, DOWN};
-static uint8_t sequence_2[SEQUENCE_LENGTH] = {DOWN, DOWN, UP, UP};
-
-static uint8_t seq1_pos;
-static uint8_t seq2_pos;
-
-
-enum buttStates {IDLE=0, ST_1, ST_2, ST_3, ST_4};
-
-static uint8_t state;
-
-
-void SwitchModeIntHandler(void) {
+void SwitchModeIntHandler(void)
+{
     int32_t mSwitch = 0;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -37,9 +16,12 @@ void SwitchModeIntHandler(void) {
     SysCtlDelay (SysCtlClockGet () / 150);
 
     mSwitch = GPIOPinRead(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
-    if (getState() == LANDED && mSwitch) {
+
+    if (getState() == LANDED && mSwitch)
+    {
         xSemaphoreGiveFromISR(xTakeOffSemaphore, &xHigherPriorityTaskWoken);
-    } else if (getState() == IN_FLIGHT && !mSwitch) {
+    } else if (getState() == IN_FLIGHT && !mSwitch)
+    {
         xSemaphoreGiveFromISR(xLandSemaphore, &xHigherPriorityTaskWoken);
     }
 
@@ -48,7 +30,8 @@ void SwitchModeIntHandler(void) {
 }
 
 
-void initModeSwitch(void) {
+void initModeSwitch(void)
+{
     // initialize mode switch
     SysCtlPeripheralEnable(MODE_PERIPH_GPIO);
     GPIOPinTypeGPIOInput (SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
@@ -63,42 +46,46 @@ void initModeSwitch(void) {
 }
 
 
-uint8_t checkButtSequence(uint8_t butt) {
+uint8_t checkButtSequence(uint8_t butt)
+{
     uint8_t completedSeq = 0;
-
     static TickType_t lastTime;
     TickType_t currTime = xTaskGetTickCount();
 
-    if ((currTime - lastTime) > pdMS_TO_TICKS(TIME_THRESHOLD_MS)) {
+    if ((currTime - lastTime) > pdMS_TO_TICKS(TIME_THRESHOLD_MS))
+    {
         seq1_pos = 0;
         seq2_pos = 0;
     }
 
-
-    if (butt == sequence_1[seq1_pos]){// && timeSinceLastPress < pdMS_TO_TICKS(TIME_THRESHOLD_MS)) {
+    if (butt == sequence_1[seq1_pos])
+    {
         seq1_pos++;
     } else {
         seq1_pos = 0;
     }
 
-    if (butt == sequence_2[seq2_pos]){// && timeSinceLastPress < pdMS_TO_TICKS(TIME_THRESHOLD_MS)) {
+    if (butt == sequence_2[seq2_pos])
+    {
         seq2_pos++;
     } else {
         seq2_pos = 0;
     }
 
-
-    if (seq1_pos == SEQUENCE_LENGTH) {
+    if (seq1_pos == SEQUENCE_LENGTH)
+    {
         completedSeq = SEQUENCE_1;
         seq1_pos = 0;
         seq2_pos = 0;
 
-    } else if (seq2_pos == SEQUENCE_LENGTH) {
+    } else if (seq2_pos == SEQUENCE_LENGTH)
+    {
         completedSeq = SEQUENCE_2;
         seq1_pos = 0;
         seq2_pos = 0;
 
-    } else {
+    } else
+    {
         completedSeq = NULL;
     }
 
@@ -106,38 +93,46 @@ uint8_t checkButtSequence(uint8_t butt) {
     return completedSeq;
 }
 
-
-void pollButtons(void* pvParameters) {
+void pollButtons(void* pvParameters)
+{
     const uint16_t delay_ms = 1000/BUTTON_POLL_RATE_HZ;
     xButtPollSemaphore = xSemaphoreCreateBinary();
     uint8_t seq = 0;
 
-    while (1) {
-        if (getState() != IN_FLIGHT) {
+    while (1)
+    {
+        if (getState() != IN_FLIGHT)
+        {
             xSemaphoreTake(xButtPollSemaphore, portMAX_DELAY);
         }
 
         updateButtons();
-        if (checkButton (UP) == PUSHED) {
+        if (checkButton (UP) == PUSHED)
+        {
             incAlt();
             seq = checkButtSequence(UP);
 
-        } else if (checkButton (DOWN) == PUSHED) {
+        } else if (checkButton (DOWN) == PUSHED)
+        {
             decAlt();
             seq = checkButtSequence(DOWN);
 
-        } else if (checkButton (LEFT) == PUSHED) {
+        } else if (checkButton (LEFT) == PUSHED)
+        {
             decYaw();
             seq = checkButtSequence(LEFT);
 
-        } else if (checkButton (RIGHT) == PUSHED) {
+        } else if (checkButton (RIGHT) == PUSHED)
+        {
             incYaw();
             seq = checkButtSequence(RIGHT);
         }
 
-        if (seq == SEQUENCE_1) {
+        if (seq == SEQUENCE_1)
+        {
             setMode1();
-        } else if (seq == SEQUENCE_2) {
+        } else if (seq == SEQUENCE_2)
+        {
             setMode2();
         }
         vTaskDelay(pdMS_TO_TICKS(delay_ms));

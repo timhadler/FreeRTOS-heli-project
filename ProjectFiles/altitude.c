@@ -1,44 +1,29 @@
-/*  altitude.c - Reads the altitude using an ADC conversion and the average from a FreeRTOS Queue.
-    Contributers: Hassan Ali Alhujhoj, Abdullah Naeem and Tim Hadler
-    Last modified: 8.8.2020 */
+/*
+ * altitude.c
+ *
+ * Reads the altitude using an ADC conversion and the average from
+ * a FreeRTOS Queue.
+ *
+ * Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
+ * Last modified: 8.8.2020
+ */
 
-#include <stdint.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
-#include "inc/hw_memmap.h"
-#include "driverlib/sysctl.h"
-#include "driverlib/interrupt.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "task.h"
-#include "timers.h"
-#include "driverlib/adc.h"
 #include "altitude.h"
-
-
 
 //******************************************************************
 // Global Variables
 //******************************************************************
 static uint32_t altitude = 0;
-
-//******************************************************************
-// FreeRTOS Variables
-//******************************************************************
-
-/* FreeRTOS variables*/
 static TimerHandle_t Alt_IN_Timer;
 static QueueHandle_t Alt_IN_Queue;
 
-
 // The handler for the ADC conversion complete interrupt.
-void ADCIntHandler(void) {
+void ADCIntHandler(void)
+{
     uint32_t sample;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-    // Get the single sample from ADC0.  ADC_BASE is defined in
-    // inc/hw_memmap.h
+    //Get the single sample from ADC0.  ADC_BASE is defined in inc/hw_memmap.h
     ADCSequenceDataGet(ADC0_BASE, 3, &sample);
 
     // Place it in FreeRTOS Queue
@@ -50,21 +35,27 @@ void ADCIntHandler(void) {
 
 
 // Altitude Task function
-void AltitudeTimerCallback(TimerHandle_t timer){
+void AltitudeTimerCallback(TimerHandle_t timer)
+{
     ADCProcessorTrigger(ADC0_BASE, 3);      // Initiate an ADC conversion
 }
 
 
-/* Enables and configures ADC */
-void initADC (void) {
-    /* Create a timer that would run the ADCProsessorTrigger */
+// Enables and configures ADC
+void initADC (void)
+{
+    // Create a timer that would run the ADCProsessorTrigger
     Alt_IN_Timer = xTimerCreate ("AltitudeTimer", pdMS_TO_TICKS(10), pdTRUE, NULL, AltitudeTimerCallback);
-    if(Alt_IN_Timer == NULL){
+
+    if(Alt_IN_Timer == NULL)
+    {
         while(1);
     }
-    /* Create a FreeRTOS queue for average mean of ADC readings */
+
+    // Create a FreeRTOS queue for average mean of ADC readings
     Alt_IN_Queue = xQueueCreate(Alt_QUEUE_SIZE, QUEUE_ITEM_SIZE);
-    if(Alt_IN_Queue == NULL){
+    if(Alt_IN_Queue == NULL)
+    {
         while(1);
     }
 
@@ -99,51 +90,60 @@ void initADC (void) {
     ADCIntEnable(ADC0_BASE, 3);
 }
 
-uint8_t getAlt(void){
+uint8_t getAlt(void)
+{
     return altitude;
 }
 
-/* Returns the mid altitude point in percentage */
-uint32_t getMidAlt(void){
-    //((100 * 2 * (altLandedValue - meanVal) + VOLTAGE_SENSOR_RANGE)) / (2 * VOLTAGE_SENSOR_RANGE);
+// Returns the mid altitude point in percentage
+uint32_t getMidAlt(void)
+{
     return round(minAlt + ((maxAlt - minAlt) / 2));
 }
 
-
-/* Calculates the average mean of ADC readings and altitude of the helicopter from a FreeRTOS queue*/
-void processAlt(void* pvParameter) {
+/**
+ * Calculates the average mean of ADC readings and altitude of the helicopter from a
+ *  FreeRTOS queue
+ */
+void processAlt(void* pvParameter)
+{
     uint32_t temp = 0;
     uint32_t sum = 0;
     uint8_t count = 0;
     uint32_t avg = 0;
     uint32_t landedAlt = 0;
 
-
-    /* start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit.
-       So, it will keep checking the status of the queue for ever.*/
+    /*
+     * start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit.
+     * So, it will keep checking the status of the queue for ever.
+     */
     xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
-    while(1){
+    while(1)
+    {
         xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY);
         sum += temp;
         count++;
 
-        if (count == Alt_IN_QUEUE_SIZE) {
+        if (count == Alt_IN_QUEUE_SIZE)
+        {
             avg = (2 * sum + Alt_IN_QUEUE_SIZE) / 2 / Alt_IN_QUEUE_SIZE;
             sum = 0;
             count = 0;
 
             // First time the buffer is filled, heli should be landed, record the averaged adc values
-            if (landedAlt == 0) {
+            if (landedAlt == 0)
+            {
                 landedAlt = avg;
             }
         }
-
         altitude = 100 * (landedAlt - avg) / VOLTAGE_SENSOR_RANGE;
 
-        if (altitude > 100) {
+        if (altitude > 100)
+        {
             altitude = 100;
-        } else if (altitude < 0) {
+        } else if (altitude < 0)
+        {
             altitude = 0;
         }
     }

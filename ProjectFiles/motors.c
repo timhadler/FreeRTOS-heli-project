@@ -1,36 +1,40 @@
 /*
- * myMotors.c
+ *  motors.c
  *
+ *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  *  Created on: 2/08/2020
- *      Author: tch118
  */
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "driverlib/sysctl.h"
+
 #include "inc/hw_memmap.h"
+
 #include "driverlib/pin_map.h" //Needed for pin configure
 #include "driverlib/debug.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pwm.h"
-#include "myMotors.h"
+
+#include "motors.h"
 
 //******************************************************************
 // Global Variables
 //******************************************************************
 motor_t mainMotor;
 motor_t tailMotor;
-uint32_t periodPWM;         // Period for the PWM
+uint32_t periodPWM;  // Period for the PWM
 
-//******************************************************************
-// Functions
-//******************************************************************
-uint8_t getPWM(void) {
+uint8_t getPWM(void)
+{
     uint8_t duty = tailMotor.duty;
     return duty;
 }
 
-void initMotors(void) {
+// Initiate the PWM signals for the heli reg main and tail motors
+void initMotors(void)
+{
     SysCtlPWMClockSet(PWM_CLOCK_DIVIDER);
 
     // As a precaution, make sure that the peripherals used are reset
@@ -98,8 +102,9 @@ void initMotors(void) {
     setMotor(MOTOR_T, PWM_START_DUTY);
 }
 
-
-void setMotor(uint8_t main, uint8_t duty) {
+// Sets the main and tail motors' duty and PWM signal
+void setMotor(uint8_t main, uint8_t duty)
+{
     motor_t *motor;
 
     if (main) {
@@ -109,8 +114,5 @@ void setMotor(uint8_t main, uint8_t duty) {
     }
 
     motor->duty = duty;
-
-    //periodPWM = SysCtlClockGet() / PWM_DIVIDER / PWM_FREQ_HZ;
-
     PWMPulseWidthSet(motor->base, motor->outnum, periodPWM * duty / 100);
 }

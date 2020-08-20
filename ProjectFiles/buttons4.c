@@ -17,14 +17,17 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/debug.h"
-#include "inc/tm4c123gh6pm.h"  // Board specific defines (for PF0)
-#include "buttons4.h"
 
+#include "inc/tm4c123gh6pm.h"  // Board specific defines (for PF0)
+
+#include "buttons4.h"
 
 // *******************************************************
 // Globals to module
@@ -34,11 +37,11 @@ static uint8_t but_count[NUM_BUTS];
 static bool but_flag[NUM_BUTS];
 static bool but_normal[NUM_BUTS];   // Corresponds to the electrical state
 
-// *******************************************************
-// initButtons: Initialise the variables associated with the set of buttons
-// defined by the constants in the buttons2.h header file.
-void
-initButtons (void)
+/**
+ *  initButtons: Initialise the variables associated with the set of buttons
+ *  defined by the constants in the buttons2.h header file.
+*/
+void initButtons (void)
 {
 	int i;
 
@@ -91,8 +94,7 @@ initButtons (void)
 // A state change occurs only after NUM_BUT_POLLS consecutive polls have
 // read the pin in the opposite condition, before the state changes and
 // a flag is set.  Set NUM_BUT_POLLS according to the polling rate.
-void
-updateButtons (void)
+void updateButtons (void)
 {
 	bool but_value[NUM_BUTS];
 	int i;
@@ -120,12 +122,11 @@ updateButtons (void)
 	}
 }
 
-// *******************************************************
-// checkButton: Function returns the new button logical state if the button
-// logical state (PUSHED or RELEASED) has changed since the last call,
-// otherwise returns NO_CHANGE.
-uint8_t
-checkButton (uint8_t butName)
+/*
+ * checkButton: Function returns the new button logical state if the button logical state
+ * (PUSHED or RELEASED) has changed since the last call,otherwise returns NO_CHANGE.
+*/
+uint8_t checkButton (uint8_t butName)
 {
 	if (but_flag[butName])
 	{
@@ -137,23 +138,4 @@ checkButton (uint8_t butName)
 	}
 	return NO_CHANGE;
 }
-
-
-/*  Checks to see if the up, down, left, or right button has been pushed */
-int32_t
-buttonPressed(void)
-{
-    if (checkButton(UP) == PUSHED) {
-        return UP;
-    } else if (checkButton(DOWN) == PUSHED) {
-        return DOWN;
-    } else if (checkButton(LEFT) == PUSHED) {
-        return LEFT;
-    } else if (checkButton(RIGHT) == PUSHED) {
-        return RIGHT;
-    }
-}
-
-
-
 

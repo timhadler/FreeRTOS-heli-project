@@ -1,33 +1,16 @@
 /*
- * myYaw.c
+ *  yaw.c
  *
+ *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  *  Created on: 6/08/2020
- *      Author: tch118
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include "driverlib/interrupt.h"
-#include "myYaw.h"
-//#include "OLEDDisplay.h"
+#include "yaw.h"
 
+#define QUEUE_ITEM_SIZE     sizeof(int32_t) //4 bytes which is the size of each ACD sample
 
-//******************************************************************
-// Global Variables
-//******************************************************************
-enum quadrature {A=0, B=1, C=3, D=2}; // Sets the values for the finite state machine
-static int32_t slots;
-
-/* Constants */
-#define QUEUE_SIZE 1 // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
-#define QUEUE_ITEM_SIZE sizeof(int32_t) //4 bytes which is the size of each ACD sample
-
-
-/* FreeRTOS variables*/
-
-
-void initYaw(void) {
+void initYaw(void)
+{
     // Initialize yaw signals
     SysCtlPeripheralEnable(YAW_PERIPH_GPIO);
     while (!SysCtlPeripheralReady(YAW_PERIPH_GPIO));
@@ -41,20 +24,22 @@ void initYaw(void) {
     GPIOIntEnable(YAW_GPIO_BASE, YAW_CHA_INT_PIN | YAW_CHB_INT_PIN);
 }
 
-
-int32_t getYaw(void){
+int32_t getYaw(void)
+{
     return (int32_t) (360 * slots) / DISK_INTERRUPTS;
 }
 
-
-void setYawReference(void) {
+void setYawReference(void)
+{
     slots = 0;
 }
 
-
-// This is the interrupt ISR for the yaw sensors
-// 'Gives' a semaphore to defer the event processing to a FreeRTOS task
-void YawIntHandler(void) {
+/**
+ * This is the interrupt ISR for the yaw sensors
+ * 'Gives' a semaphore to defer the event processing to a FreeRTOS task
+ */
+void YawIntHandler(void)
+{
     static int32_t currentState;
     int32_t nextState;
 
@@ -108,17 +93,15 @@ void YawIntHandler(void) {
             }
             currentState = nextState;
 
-/*            // Limits the yaw to +-180 degees from the reference point
-            if (slots == 224 || slots == -224) {
-                slots = slots*-1; // Switches the sign of yaw angle
-            }*/
-
             // Limits Yaw to 0 - 360 degrees
-            if (slots < 0) {
+            if (slots < 0)
+            {
                 slots = DISK_INTERRUPTS + slots;
-            } else if (slots > DISK_INTERRUPTS) {
+            } else if (slots > DISK_INTERRUPTS)
+            {
                 slots = 0;
             }
 
         GPIOIntClear(YAW_GPIO_BASE, CH_A | CH_B);
 }
+

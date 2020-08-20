@@ -1,8 +1,11 @@
 /*
+ * main.c
+ *
  * Main source file for ENCE464 Heli project
  *
  *  Created on: 27/07/2020
- *      Authors: tch118, ...
+ *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
+ *  Last modified: 8.8.2020
  */
 
 #include <stdint.h>
@@ -19,38 +22,29 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
+#include "driverlib/pwm.h"
+
 #include "utils/ustdlib.h"
+
 #include "stdlib.h"
 
-#include "driverlib/pwm.h"
+#include "OrbitOLED/OrbitOLEDInterface.h"
+
+#include "OLEDDisplay.h"
+#include "constants.h"
+#include "motors.h"
+#include "yaw.h"
+#include "altitude.h"
+#include "controllers.h"
+#include "userInput.h"
+#include "buttons4.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
-#include "buttons4.h"
 
-#include "OLEDDisplay.h"
-#include "constants.h"
-#include "myMotors.h"
-#include "myYaw.h"
-#include "altitude.h"
-#include "controllers.h"
-#include "userInput.h"
-
-
-//******************************************************************
-// Global Variables
-//******************************************************************
-//static uint8_t targetAlt;
-//static int16_t targetYaw;
-
-//static int16_t refYaw;
-
-//******************************************************************
-// Functions
-//******************************************************************
-void displayOLED(void* pvParameters) {
+void displayOLED(void* pvParameters)
+{
     const uint16_t delay_ms = 1000/DISPLAY_RATE_HZ;
 
     char text_buffer[16];
@@ -72,12 +66,8 @@ void displayOLED(void* pvParameters) {
     }
 }
 
-
-//**********************************************************************
 // Transmit a string via UART0
-//**********************************************************************
-void
-UARTSend (char *pucBuffer)
+void UARTSend (char *pucBuffer)
 {
     // Loop while there are more characters to send.
     while(*pucBuffer)
@@ -88,9 +78,9 @@ UARTSend (char *pucBuffer)
     }
 }
 
-
 // Function to update UART communications
-void sendData(void* pvParameters) {
+void sendData(void* pvParameters)
+{
     uint8_t heliState;
     char* stateStr;
     char statusStr[16 + 1];
@@ -109,6 +99,9 @@ void sendData(void* pvParameters) {
 
         } else if (heliState == IN_FLIGHT) {
             stateStr = "In flight";
+
+        } else {
+            stateStr = "Intd state";
         }
 
         // Form and send a status message to the console
@@ -125,31 +118,24 @@ void sendData(void* pvParameters) {
     }
 }
 
-
-void createTasks(void) {
-    xTaskCreate(pollButtons, "Button Poll", 200, (void *) NULL, 3, NULL);
-    xTaskCreate(displayOLED, "display", 200, (void *) NULL, 3, NULL);
-    xTaskCreate(controller, "controller", 56, (void *) NULL, 2, NULL);
-    xTaskCreate(processAlt, "Altitude Calc", 128, (void *) NULL, 4, NULL);
-    xTaskCreate(sendData, "UART", 200, (void *) NULL, 5, NULL);
-    xTaskCreate(FSM, "Finite State Machine", 150, (void *) NULL, 4, NULL);
+void createTasks(void)
+{
+    xTaskCreate(pollButtons, "Button Poll", 64, (void *) NULL, 3, NULL);
+    xTaskCreate(displayOLED, "display", 256, (void *) NULL, 3, NULL);
+    xTaskCreate(controller, "controller", 64, (void *) NULL, 2, NULL);
+    xTaskCreate(processAlt, "Altitude Calc", 64, (void *) NULL, 4, NULL);
+    xTaskCreate(sendData, "UART", 256, (void *) NULL, 3, NULL);
+    xTaskCreate(FSM, "Finite State Machine", 64, (void *) NULL, 4, NULL);
 }
 
-
-//********************************************************
 // initialiseUSB_UART - 8 bits, 1 stop bit, no parity
-//********************************************************
-void
-initialiseUSB_UART (void)
+void initialiseUSB_UART (void)
 {
-    //
     // Enable GPIO port A which is used for UART0 pins.
-    //
     SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
     SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
-    //
+
     // Select the alternate (UART) function for these pins.
-    //
     GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
     GPIOPinConfigure (GPIO_PA0_U0RX);
     GPIOPinConfigure (GPIO_PA1_U0TX);
@@ -161,9 +147,9 @@ initialiseUSB_UART (void)
     UARTEnable(UART_USB_BASE);
 }
 
-
 // Initialize the program
-void initialize(void) {
+void initialize(void)
+{
     // Set clock to 80MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
@@ -181,7 +167,6 @@ void initialize(void) {
     GPIOPadConfigSet (LEFT_BUT_PORT_BASE, LEFT_BUT_PIN, GPIO_STRENGTH_2MA,
        GPIO_PIN_TYPE_STD_WPU);
 
-
     //---Unlock PF0 for the right button:
     GPIO_PORTF_LOCK_R = GPIO_LOCK_KEY;
     GPIO_PORTF_CR_R |= GPIO_PIN_0; //PF0 unlocked
@@ -189,25 +174,19 @@ void initialize(void) {
     GPIOPinTypeGPIOInput (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN);
     GPIOPadConfigSet (RIGHT_BUT_PORT_BASE, RIGHT_BUT_PIN, GPIO_STRENGTH_2MA,
        GPIO_PIN_TYPE_STD_WPU);
-    ////
 
-
-    SysCtlPeripheralEnable(REF_PERIPH);                // For Reference signal
+    // For Reference signal
+    SysCtlPeripheralEnable(REF_PERIPH);
     while (!SysCtlPeripheralReady(REF_PERIPH));
     GPIOPinTypeGPIOInput(REF_GPIO_BASE, REF_PIN);
     GPIOPadConfigSet (REF_GPIO_BASE, REF_PIN, GPIO_STRENGTH_4MA,
        GPIO_PIN_TYPE_STD_WPD);
 
-    GPIOPinWrite(LED_GPIO_BASE, LED_RED_PIN, 0x00);               // off by default
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);         // PF_1 as output
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(LED_GPIO_BASE, LED_GREEN_PIN, 0x00);
-
     IntMasterEnable();
 }
 
-
-void main(void) {
+void main(void)
+{
     initialize();
     vTaskStartScheduler();
 }
