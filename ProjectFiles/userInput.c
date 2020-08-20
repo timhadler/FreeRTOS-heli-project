@@ -29,7 +29,6 @@ void SwitchModeIntHandler(void)
     GPIOIntClear(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
 }
 
-
 void initModeSwitch(void)
 {
     // initialize mode switch
@@ -44,7 +43,6 @@ void initModeSwitch(void)
     GPIOIntRegister(SWITCH_MODE_GPIO_BASE, SwitchModeIntHandler);
     GPIOIntEnable(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_INT_PIN);
 }
-
 
 uint8_t checkButtSequence(uint8_t butt)
 {
@@ -134,6 +132,7 @@ void pollButtons(void* pvParameters)
         } else if (seq == SEQUENCE_2)
         {
             setMode2();
+            seq = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

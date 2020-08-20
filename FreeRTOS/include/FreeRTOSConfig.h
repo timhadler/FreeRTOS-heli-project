@@ -37,6 +37,16 @@
 
 #define configTIMER_QUEUE_LENGTH 16
 
+#define configGENERATE_RUN_TIME_STATS 1
+
+#define configUSE_STATS_FORMATTING_FUNCTIONS 1
+
+#define configUSE_TRACE_FACILITY 1
+
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() do {} while (0)
+
+#define portGET_RUN_TIME_COUNTER_VALUE() xTaskGetTickCount()
+
 #define INCLUDE_vTaskPrioritySet 0
 
 #define INCLUDE_uxTaskPriorityGet 0
@@ -48,6 +58,8 @@
 #define INCLUDE_vTaskDelayUntil 0
 
 #define INCLUDE_vTaskDelay 1
+
+#define INCLUDE_uxTaskGetStackHighWaterMark 1
 
 #define configUSE_16_BIT_TICKS 0 // not sure what this is - This sets the data type for the FreeRTOS tick interupt counter, 1->uint16, 0->uint32
 

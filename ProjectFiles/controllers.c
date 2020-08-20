@@ -79,7 +79,6 @@ int16_t getAltErr(int16_t tAlt)
     return tAlt - getAlt();
 }
 
-
 int16_t getYawErr(int16_t tYaw)
 {
     int16_t error = 0;
@@ -98,13 +97,11 @@ int16_t getYawErr(int16_t tYaw)
     {
         error = tYaw - currYaw;
     }
-
     return error;
 }
 
 void FSM(void* pvParameters)
 {
-    //state = LANDED;
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
     int16_t yaw = 0;
 
@@ -218,7 +215,6 @@ void controller(void* pvParameters)
                 targetYaw = 0;
                 targetAlt = 10;
             }
-
         } else if (state == LANDING)
         {
             // Rotate to yaw reference then decrease target alt at a fixed rate

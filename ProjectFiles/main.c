@@ -109,7 +109,7 @@ void sendData(void* pvParameters)
         UARTSend (statusStr);
         sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), getTargetYaw()); // * usprintf
         UARTSend (statusStr);
-        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM() ); // * usprintf
+        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM()); // * usprintf
         UARTSend (statusStr);
         sprintf(statusStr, "Mode: %s \r\n", stateStr);
         UARTSend (statusStr);

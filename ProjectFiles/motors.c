@@ -19,9 +19,6 @@
 
 #include "motors.h"
 
-//******************************************************************
-// Global Variables
-//******************************************************************
 motor_t mainMotor;
 motor_t tailMotor;
 uint32_t periodPWM;  // Period for the PWM
@@ -83,7 +80,7 @@ void initMotors(void)
 
 
     // Calculate the PWM PeriodPWM corresponding to the freq.
-    periodPWM = SysCtlClockGet() / PWM_DIVIDER / PWM_FREQ_HZ;
+    periodPWM = SysCtlClockGet() / PWM_DIVIDER / 200;
     PWMGenPeriodSet(PWM_MAIN_BASE, PWM_MAIN_GEN, periodPWM);
     PWMGenPeriodSet(PWM_TAIL_BASE, PWM_TAIL_GEN, periodPWM);
 

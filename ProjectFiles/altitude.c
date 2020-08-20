@@ -95,6 +95,7 @@ uint8_t getAlt(void)
     return altitude;
 }
 
+
 // Returns the mid altitude point in percentage
 uint32_t getMidAlt(void)
 {
