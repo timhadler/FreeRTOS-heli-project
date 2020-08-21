@@ -10,17 +10,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
-
-#include "inc/hw_memmap.h"
-#include "inc/hw_types.h"
-#include "inc/hw_ints.h"
-#include "driverlib/pin_map.h"
 #include "driverlib/debug.h"
-#include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
-#include "utils/ustdlib.h"
-#include "stdlib.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -60,6 +51,7 @@ void initialize(void)
 
     IntMasterEnable();
 }
+
 
 void main(void)
 {
