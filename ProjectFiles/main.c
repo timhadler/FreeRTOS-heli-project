@@ -1,11 +1,11 @@
 /*
  * main.c
  *
- * Main source file for ENCE464 Heli project
+ *  Main source file for ENCE464 Heli project. This source file initialises the program and starts the scheduler out.
  *
  *  Created on: 27/07/2020
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
- *  Last modified: 8.8.2020
+ *  Last modified: 08/08/2020
  */
 
 #include <stdint.h>

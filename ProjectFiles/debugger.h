@@ -5,11 +5,11 @@
  * debugger.h
  *
  * Sends selected variables through a serial interface for debugging purposes.
- * The variables include the altitude, yaw, helicopter state and PWM.
+ * The variables include the altitude, YAW, helicopter state and PWM.
  *
  *  Created on: 27/07/2020
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
- *  Last modified: 8.8.2020
+ *  Last modified: 08/08/2020
  */
 
 

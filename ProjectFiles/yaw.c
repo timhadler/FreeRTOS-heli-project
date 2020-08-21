@@ -1,6 +1,10 @@
 /*
  *  yaw.c
  *
+ * Initialises the interrupts for two YAW channels responsible for reading from two YAW sensors from the helicopter rig.
+ * This module reads out the YAW values from the YAW sensors using a FSM by follows quadrature decoding of channels A and B sensors.
+ * The YAW channels are 90 degrees out of phase. Channel B leads channel sensor by 90 degrees when rotating in the clockwise direction.
+ *
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  *  Created on: 6/08/2020
  */
@@ -9,6 +13,7 @@
 
 #define QUEUE_ITEM_SIZE     sizeof(int32_t) //4 bytes which is the size of each ACD sample
 
+// Initialises the YAW peripherals and interrupts
 void initYaw(void)
 {
     // Initialize yaw signals
@@ -31,18 +36,20 @@ void initYaw(void)
        GPIO_PIN_TYPE_STD_WPD);
 }
 
+// Returns the value of YAW in degrees
 int32_t getYaw(void)
 {
     return (int32_t) (360 * slots) / DISK_INTERRUPTS;
 }
 
+// Sets the YAW reference to zero
 void setYawReference(void)
 {
     slots = 0;
 }
 
 /**
- * This is the interrupt ISR for the yaw sensors
+ * This is the interrupt ISR for the YAW sensors
  * 'Gives' a semaphore to defer the event processing to a FreeRTOS task
  */
 void YawIntHandler(void)
@@ -109,6 +116,7 @@ void YawIntHandler(void)
                 slots = 0;
             }
 
+        // Clear the GPIO interrupt
         GPIOIntClear(YAW_GPIO_BASE, CH_A | CH_B);
 }
 

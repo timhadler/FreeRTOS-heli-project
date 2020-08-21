@@ -1,8 +1,8 @@
 /*
- * FreeRTOSConfig.h
+ *  FreeRTOSConfig.h
  *
  *  Created on: 15/07/2020
- *      Author: Andreeeeee
+ *  Author: Andre Renaud
  */
 
 #ifndef FREERTOSCONFIG_H_

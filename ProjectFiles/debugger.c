@@ -3,7 +3,7 @@
  * debugger.c
  *
  * Sends selected variables through a serial interface for debugging purposes.
- * The variables include the altitude, yaw, helicopter state and PWM.
+ * The variables include the altitude, YAW, helicopter state and PWM.
  *
  *  Created on: 27/07/2020
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
@@ -71,9 +71,10 @@ char* stateToString(uint8_t heliState)
 }
 
 
-// Updates the UART communication
-// Sends heli state, altitude, yaw, motor pwm duty cycles
-//                  targetHeight, and targetYaw
+/**
+ * Updates the UART communication Sends helicopter state, altitude,
+ * YAW, motor PWM duty cycles targetHeight, and targetYaw
+ */
 void sendData(void* pvParameters)
 {
     uint8_t heliState;

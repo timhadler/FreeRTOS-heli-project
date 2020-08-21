@@ -1,7 +1,8 @@
 /*
  *  motors.c
  *
- *  Module for running the heli main and tail motors, using PWM
+ *  Module that runs the helicopter's main and tail motors using PWMs. This module intialises the PWM
+ *  peripherals and creates structures to meet the characteristics of the main and the tail motors.
  *
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  *  Created on: 2/08/2020

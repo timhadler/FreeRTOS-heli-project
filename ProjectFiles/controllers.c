@@ -1,10 +1,12 @@
-/*
- * controllers.c
+/**
+ *  controllers.c
  *
- * Module for controlling the heli motors
+ *  Module for controlling the helicopter motors. This module is responsable for controlling the PI controllers for both the
+ *  main and the tail motors, performing the special functions such as 180 degrees turn, nodding the helicopter using the head shake function,
+ *  and maintaining the mode of flight that the helicopter is in. Flight modes includes LANDING, IN_FLIGHT, or TAKE_OFF.
  *
- * Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
- * Created on: 7/08/2020
+ *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
+ *  Created on: 7/08/2020
  */
 
 #include <stdint.h>
@@ -136,10 +138,11 @@ int16_t getYawErr(void) {
 }
 
 
-/* FSM controls state transitions
- * When in Landed or IN FLIGHT state, this task is blocked by semaphores given from
- * the mode switch interrupt handler, and state switches once the semaphores have been given
- * When in Landing or TAKE oFF mode, the state switches when the landed and take off conditions are met
+/**
+ *  FSM controls state transitions.
+ *  When in Landed or IN FLIGHT state, this task is blocked by semaphores given from
+ *  the mode switch interrupt handler, and state switches once the semaphores have been given
+ *  When in Landing or TAKE oFF mode, the state switches when the landed and take off conditions are met
  */
 void FSM(void* pvParameters)
 {
@@ -189,8 +192,9 @@ void FSM(void* pvParameters)
 }
 
 
-/* Special mode 1 is a one eighty turn
- * Sets the target Yaw to 180 degrees from current yaw
+/**
+ *  Special mode 1 is a one eighty turn
+ *  Sets the target Yaw to 180 degrees from current yaw
  */
 void oneEighty(void) {
     int16_t yaw = getYaw();

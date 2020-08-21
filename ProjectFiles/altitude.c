@@ -1,11 +1,11 @@
 /*
  * altitude.c
  *
- * Reads the altitude using an ADC conversion and the average from
- * a FreeRTOS Queue.
+ * Reads the altitude using an ADC conversion algorithm and averages these ADC
+ * readings from a FreeRTOS Queue to get the helicopter altitude in percentage.
  *
  * Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
- * Last modified: 8.8.2020
+ * Last modified: 08/08/2020
  */
 
 
@@ -53,7 +53,7 @@ void ADCIntHandler(void)
 }
 
 
-// Altitude Task function
+// Altitude Task function. A callback function for the created timer in initADC().
 void AltitudeTimerCallback(TimerHandle_t timer)
 {
     ADCProcessorTrigger(ADC0_BASE, 3);      // Initiate an ADC conversion
