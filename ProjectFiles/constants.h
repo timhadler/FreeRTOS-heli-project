@@ -10,21 +10,10 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-//******************************************************************
-// Macros - Define UART constants
-//******************************************************************
-#define MAX_STR_LEN             16
-#define BAUD_RATE               9600
-#define UART_USB_BASE           UART0_BASE
-#define UART_USB_PERIPH_UART    SYSCTL_PERIPH_UART0
-#define UART_USB_PERIPH_GPIO    SYSCTL_PERIPH_GPIOA
-#define UART_USB_GPIO_BASE      GPIO_PORTA_BASE
-#define UART_USB_GPIO_PIN_RX    GPIO_PIN_0
-#define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
-#define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
+
 
 #define DISPLAY_RATE            60
-#define UART_SEND_RATE_HZ       4
+
 #define MAX_HEIGHT              962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
 
 

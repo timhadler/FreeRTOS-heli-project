@@ -11,18 +11,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "inc/hw_memmap.h"
-
-#include "driverlib/gpio.h"
-
-#include "motors.h"
-#include "altitude.h"
-#include "yaw.h"
-#include "buttons4.h"
-
 #include "FreeRTOS.h"
-#include "task.h"
 #include "semphr.h"
+
 
 //******************************************************************
 // Macros - Define ref signal base and pins

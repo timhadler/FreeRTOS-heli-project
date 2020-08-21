@@ -36,4 +36,8 @@ void ClearDisplayLine(uint8_t line);
  */
 void writeDisplay(char text[16], uint8_t line);
 
+
+//Displays the current and target values for the altitude and the yaw
+void displayOLED(void* pvParameters);
+
 #endif /* OLEDDISPLAY_H_ */
