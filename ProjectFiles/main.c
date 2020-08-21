@@ -19,32 +19,21 @@
 #include "driverlib/debug.h"
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
-//#include "driverlib/interrupt.h"
-
-//#include "driverlib/pwm.h"
-
 #include "utils/ustdlib.h"
-
 #include "stdlib.h"
-
-//#include "OrbitOLED/OrbitOLEDInterface.h"
-
-#include "OLEDDisplay.h"
-#include "constants.h"
-//#include "motors.h"
-#include "yaw.h"
-#include "altitude.h"
-#include "controllers.h"
-#include "userInput.h"
-//#include "buttons4.h"
-#include "debugger.h"
-#include "OLEDDisplay.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
-
+#include "OLEDDisplay.h"
+#include "motors.h"
+#include "yaw.h"
+#include "altitude.h"
+#include "controllers.h"
+#include "userInput.h"
+#include "debugger.h"
+#include "OLEDDisplay.h"
 
 
 // Initialize the program
@@ -55,7 +44,6 @@ void initialize(void)
 
     // INitialise all the perphierals
     initUserInput();
-    initModeSwitch();
     initADC();
     initDisplay();
     initMotors();

@@ -10,11 +10,13 @@
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
-#include "buttons4.h"
-#include "controllers.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+
+//#include "buttons4.h"
+#include "controllers.h"
 #include "userInput.h"
 
 void SwitchModeIntHandler(void)
@@ -38,6 +40,7 @@ void SwitchModeIntHandler(void)
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     GPIOIntClear(SWITCH_MODE_GPIO_BASE, SWITCH_MODE_PIN);
 }
+
 
 void initUserInput(void)
 {
