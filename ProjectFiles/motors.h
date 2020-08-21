@@ -36,12 +36,13 @@
 #define PWM_TAIL_GPIO_BASE      GPIO_PORTF_BASE
 #define PWM_TAIL_GPIO_CONFIG    GPIO_PF1_M1PWM5
 #define PWM_TAIL_GPIO_PIN       GPIO_PIN_1
-#define PWM_FREQ_HZ             100
+
+#define PWM_FREQ_HZ             200
 #define PWM_START_DUTY          5
 
 
 //******************************************************************
-// Globals to module
+// Globals
 //******************************************************************
 typedef struct Motor_S {
     uint8_t duty;
@@ -49,12 +50,17 @@ typedef struct Motor_S {
     uint32_t gen;
     uint32_t outnum;
 } motor_t;
+
 enum motorType {MOTOR_T=0, MOTOR_M};
 
-uint8_t getPWM(void);
+
+//******************************************************************
+// Functions
+//******************************************************************
+uint8_t getTailPWM(void);
+uint8_t getMainPWM(void);
 
 void initMotors(void);
-
 void setMotor(uint8_t main, uint8_t duty);
 
 #endif /* MYMOTORS_H_ */

@@ -14,14 +14,6 @@
 
 #define DISPLAY_RATE            60
 
-#define MAX_HEIGHT              962 // Calibrated for a 0.8V drop (Mean ADC drop of ~= 962)
-
-
-// LED constants
-#define LED_GPIO_BASE           GPIO_PORTF_BASE
-#define LED_RED_PIN             GPIO_PIN_1
-#define LED_BLUE_PIN            GPIO_PIN_2
-#define LED_GREEN_PIN           GPIO_PIN_3
 
 // Define MODE switch
 #define MODE_PERIPH_GPIO        SYSCTL_PERIPH_GPIOA

@@ -1,71 +1,90 @@
 /*
  * controllers.c
  *
+ * Module for controlling the heli motors
+ *
  * Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  * Created on: 7/08/2020
  */
 
-#include "controllers.h"
+#include <stdint.h>
+#include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/gpio.h"
-
-#include "motors.h"
-#include "altitude.h"
-#include "yaw.h"
-#include "buttons4.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
-void setMode1(void)
-{
+#include "controllers.h"
+#include "motors.h"
+#include "altitude.h"
+#include "yaw.h"
+
+
+//******************************************************************
+// Global variables
+//******************************************************************
+static uint8_t state;
+static uint8_t targetAlt;
+static int16_t targetYaw;
+static bool foundRef;
+
+// Flags to trigger special flight modes
+static bool mode1_flag;     // 180 deg turn
+static bool mode2_flag;     // 'Shake head' mode
+
+
+//  sets the flag for mode 1
+void setMode1(void) {
     mode1_flag = true;
 }
 
-void setMode2(void)
-{
+
+// sets the flag for mode 2
+void setMode2(void) {
     mode2_flag = true;
 }
 
-int16_t getRefYaw(void)
-{
-    return refYaw;
-}
 
-uint8_t getState(void)
-{
+// Returns the current heli state
+uint8_t getState(void) {
     return state;
 }
 
-uint8_t getTargetAlt(void)
-{
+
+// returns the target altitude
+uint8_t getTargetAlt(void) {
     return targetAlt;
 }
 
-int16_t getTargetYaw(void)
-{
+
+// returns the target yaw
+int16_t getTargetYaw(void) {
     return targetYaw;
 }
 
-void incAlt(void)
-{
+
+// increases target altitude
+void incAlt(void) {
     if (targetAlt != 100)
     {
         targetAlt += 10;
     }
 }
 
-void decAlt(void)
-{
+
+// decreases target altitude
+void decAlt(void) {
     if (targetAlt != 0)
     {
         targetAlt -= 10;
     }
 }
 
-void incYaw(void)
-{
+
+// increases target yaw
+void incYaw(void) {
     if (targetYaw == 345)
     {
         targetYaw = 0;
@@ -74,8 +93,9 @@ void incYaw(void)
     }
 }
 
-void decYaw(void)
-{
+
+// decreases target yaw
+void decYaw(void) {
     if (targetYaw == 0)
     {
         targetYaw = 345;
@@ -85,21 +105,25 @@ void decYaw(void)
     }
 }
 
-int16_t getAltErr(int16_t tAlt)
-{
-    return tAlt - getAlt();
+
+// returns the current altitude error
+int16_t getAltErr(void) {
+    return targetAlt - getAlt();
 }
 
-int16_t getYawErr(int16_t tYaw)
-{
+
+// returns current yaw error
+int16_t getYawErr(void) {
     int16_t error = 0;
     int16_t currYaw = getYaw();
+    int16_t tYaw = targetYaw;
 
-    // Calculates error
+    // Calculates error for when heli is within 0-90 quadrant, and target yaw in 260-360,
     if (tYaw > 260 && currYaw < 90)
     {
         error = tYaw - 360 - currYaw;
 
+        // Calculates error for when heli is within 260-360 quadrant, and target yaw in 0-90
     } else if (tYaw < 90 && currYaw > 260)
     {
         error = 360 - currYaw + tYaw;
@@ -111,6 +135,12 @@ int16_t getYawErr(int16_t tYaw)
     return error;
 }
 
+
+/* FSM controls state transitions
+ * When in Landed or IN FLIGHT state, this task is blocked by semaphores given from
+ * the mode switch interrupt handler, and state switches once the semaphores have been given
+ * When in Landing or TAKE oFF mode, the state switches when the landed and take off conditions are met
+ */
 void FSM(void* pvParameters)
 {
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
@@ -124,26 +154,31 @@ void FSM(void* pvParameters)
         switch(state)
         {
             case LANDED:
+                // Block task until take off signal from mode switch
                 xSemaphoreTake(xTakeOffSemaphore, portMAX_DELAY);
                 state = TAKE_OFF;
                 break;
 
             case TAKE_OFF:
+                // Wait for heli to be facing yaw reference and at 10% altitude before advancing state
                 yaw = getYaw();
-                if (foundRef && (yaw <= 5 || yaw >= 355) && getAlt() > 8)
+                if (foundRef && WITHIN_5_DEGREES && getAlt() > 10)
                 {
                     state = IN_FLIGHT;
+                    // Unblock pollButtons task when in flight
                     xSemaphoreGive(xButtPollSemaphore);
                 }
                 break;
 
             case IN_FLIGHT:
+                // Block task until land signal from mode switch
                 xSemaphoreTake(xLandSemaphore, portMAX_DELAY);
                 state = LANDING;
                 break;
 
             case LANDING:
-                if (getAlt == 0)
+                // Wait for heli to be landed before advancing state
+                if (getAlt() == 0)
                 {
                     state = LANDED;
                 }
@@ -153,14 +188,45 @@ void FSM(void* pvParameters)
     }
 }
 
-void mode2 (void)
+
+/* Special mode 1 is a one eighty turn
+ * Sets the target Yaw to 180 degrees from current yaw
+ */
+void oneEighty(void) {
+    int16_t yaw = getYaw();
+    static int16_t tYaw = UNASSIGNED;
+
+    if (tYaw == UNASSIGNED)
+    {
+        // Assumes heli is facing the current target yaw, Find 180 yaw from current targetYaw
+        if (targetYaw < 180)
+        {
+            tYaw = targetYaw + 180;
+        } else {
+            tYaw = targetYaw - 180;
+        }
+
+    } else
+    {
+        targetYaw = tYaw;
+        // reset tYaw to unassigned so we can do a 180 again from a different angle
+        tYaw = UNASSIGNED;
+        mode1_flag = false;
+    }
+}
+
+
+/* Mode 2 is a heli head shake
+ * Rotates heli +- 15 degress from current yaw
+ */
+void headShake (void)
 {
     static bool clockwise = true;
     static int n = 0;
-    static int16_t tYawRef = 500;
+    static int16_t tYawRef = UNASSIGNED;
     int16_t cYaw = getYaw();
 
-    if (tYawRef == 500)
+    if (tYawRef == UNASSIGNED)
     {
         tYawRef = targetYaw;
 
@@ -173,33 +239,39 @@ void mode2 (void)
         {
             targetYaw = tYawRef - 15;
         }
+        // If it is within 5 degrees of current targetYaw, can switch direction
         if (cYaw < (targetYaw + 5) && cYaw > (targetYaw - 5))
         {
-            if (n < 4)
+            if (n < NUM_SHAKES)
             {
                 clockwise =!clockwise;
                 n++;
             } else
             {
+                // Once heli has shaken NUM_SHAKES times, reset mode
                 mode2_flag = false;
                 targetYaw = tYawRef;
-                tYawRef = 500;
+                tYawRef = UNASSIGNED;
                 n = 0;
             }
         }
     }
 }
 
+
+/* Controller task, initiates Main and Tail controllers
+ * sets targetYaw and targetHeight based on the current state
+ */
 void controller(void* pvParameters)
 {
     int16_t yaw = 0;
-    int16_t tYaw = 500;
     uint16_t tick = 0;
     foundRef = false;
     const uint16_t delay_ms = 1000/CONTROLLER_RATE_HZ;
 
     while(1)
     {
+        // Tick increments approximately at CONTROLLER_RATE_HZ
         tick++;
 
         if (state == TAKE_OFF)
@@ -209,7 +281,7 @@ void controller(void* pvParameters)
                 if (!GPIOPinRead(REF_GPIO_BASE, REF_PIN))
                 {
                     // Ref found
-                    setYawReference();
+                    setYawReference();       // 0 degrees now corresponds to the yaw reference
                     targetYaw = 0;
                     foundRef = true;
 
@@ -226,12 +298,14 @@ void controller(void* pvParameters)
                 targetYaw = 0;
                 targetAlt = 10;
             }
+
         } else if (state == LANDING)
         {
             // Rotate to yaw reference then decrease target alt at a fixed rate
             targetYaw = 0;
             yaw = getYaw();
-            if ((yaw < 5 || yaw > 355) && tick >= CONTROLLER_RATE_HZ / 1)
+            // Decrese target altitude if heli is within 5 degrees of reference
+            if (WITHIN_5_DEGREES && tick >= CONTROLLER_RATE_HZ / 1)
             {
                 if (targetAlt >= 10)
                 {
@@ -243,55 +317,36 @@ void controller(void* pvParameters)
         {
             if (mode1_flag)
             {
-                yaw = getYaw();
-                if (tYaw == 500)
-                {
-                    if (targetYaw < 180)
-                    {
-                        tYaw = targetYaw + 180;
-                    } else {
-                        tYaw = targetYaw - 180;
-                    }
-                } else if (tick >= CONTROLLER_RATE_HZ/1)
-                {
-                    tick = 0;
-                    if (targetYaw < tYaw)
-                    {
-                        //targetYaw = yaw + 15;
-                        incYaw();
-                        //targetYaw = tYaw;
-                    } else if (targetYaw > tYaw)
-                    {
-                        decYaw();
-                        //targetYaw = tYaw;
-                    } else {
-                        mode1_flag = false;
-                        tYaw = 500;
-                    }
-                }
+                // Perform mode 1
+                oneEighty();
             } else if (mode2_flag)
             {
-                mode2();
+                // Perform mode 2
+                headShake();
             }
         }
 
+        // Update motor control
         piMainUpdate();
         piTailUpdate();
+
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }
 
-void piMainUpdate(void)
-{
+
+// PI controller for the main rotor
+void piMainUpdate(void) {
     int P;
     int I;
     int control;
     int error = 0;
     static int dI;
 
-    error = getAltErr(targetAlt); // Error between the set altitude and the actual altitude
+    error = getAltErr(); // Error between the set altitude and the actual altitude
     dI += error*T_DELTA * 1000;
 
+    // Limits the output control
     P = CLAMP(KP_M*error, -MAXIMUM_P_MAIN_CONTROL, MAXIMUM_P_MAIN_CONTROL);
     I = CLAMP(KI_M*dI/1000, -MAXIMUM_I_MAIN_CONTROL, MAXIMUM_P_MAIN_CONTROL);
 
@@ -309,19 +364,22 @@ void piMainUpdate(void)
     setMotor(MOTOR_M, control);
 }
 
-void piTailUpdate(void)
-{
+
+// PI controller for the tail rotor
+void piTailUpdate(void) {
     int P;
     int I;
     int error;
     int control;
     static int dI;
 
-    error = getYawErr(targetYaw); // Error between the set altitude and the actual altitude
+    error = getYawErr(); // Error between the set altitude and the actual altitude
     dI += error * T_DELTA * 1000;
 
+    // Limits the output control
     P = CLAMP(KP_T*error, -MAXIMUM_P_TAIL_CONTROL, MAXIMUM_P_TAIL_CONTROL);
     I = CLAMP(KI_T*dI/1000, -MAXIMUM_I_TAIL_CONTROL, MAXIMUM_I_TAIL_CONTROL);
+
     control = P + I;
 
     // Enforces output limits

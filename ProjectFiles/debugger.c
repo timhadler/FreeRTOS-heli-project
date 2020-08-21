@@ -14,8 +14,6 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
-
-
 #include "driverlib/uart.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
@@ -25,22 +23,7 @@
 #include "yaw.h"
 #include "controllers.h"
 #include "motors.h"
-
 #include "debugger.h"
-
-//******************************************************************
-// Macros - Define UART constants
-//******************************************************************
-#define MAX_STR_LEN             16
-#define BAUD_RATE               9600
-#define UART_USB_BASE           UART0_BASE
-#define UART_USB_PERIPH_UART    SYSCTL_PERIPH_UART0
-#define UART_USB_PERIPH_GPIO    SYSCTL_PERIPH_GPIOA
-#define UART_USB_GPIO_BASE      GPIO_PORTA_BASE
-#define UART_USB_GPIO_PIN_RX    GPIO_PIN_0
-#define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
-#define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
-#define UART_SEND_RATE_HZ       4
 
 
 // initialiseUSB_UART - 8 bits, 1 stop bit, no parity
@@ -61,7 +44,6 @@ void initialiseUSB_UART (void)
     UARTFIFOEnable(UART_USB_BASE);
     UARTEnable(UART_USB_BASE);
 }
-
 
 
 
@@ -90,6 +72,8 @@ char* stateToString(uint8_t heliState)
 
 
 // Updates the UART communication
+// Sends heli state, altitude, yaw, motor pwm duty cycles
+//                  targetHeight, and targetYaw
 void sendData(void* pvParameters)
 {
     uint8_t heliState;
@@ -106,7 +90,7 @@ void sendData(void* pvParameters)
         UARTSend (statusStr);
         sprintf (statusStr, "Yaw %d [%d] \r\n", getYaw(), getTargetYaw()); // * usprintf
         UARTSend (statusStr);
-        sprintf (statusStr, "Main %d Tail %d \r\n", getPWM(), getPWM()); // * usprintf
+        sprintf (statusStr, "Main %d Tail %d \r\n", getTailPWM(), getMainPWM()); // * usprintf
         UARTSend (statusStr);
         sprintf(statusStr, "Mode: %s \r\n", stateStr);
         UARTSend (statusStr);

@@ -22,6 +22,13 @@ void initYaw(void)
     GPIOIntRegister(YAW_GPIO_BASE, YawIntHandler);
     GPIOIntTypeSet(YAW_GPIO_BASE, YAW_CHA_INT_PIN | YAW_CHB_INT_PIN, GPIO_BOTH_EDGES);
     GPIOIntEnable(YAW_GPIO_BASE, YAW_CHA_INT_PIN | YAW_CHB_INT_PIN);
+
+    // set up Reference signal pin
+    SysCtlPeripheralEnable(REF_PERIPH);
+    while (!SysCtlPeripheralReady(REF_PERIPH));
+    GPIOPinTypeGPIOInput(REF_GPIO_BASE, REF_PIN);
+    GPIOPadConfigSet (REF_GPIO_BASE, REF_PIN, GPIO_STRENGTH_4MA,
+       GPIO_PIN_TYPE_STD_WPD);
 }
 
 int32_t getYaw(void)

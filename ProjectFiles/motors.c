@@ -1,6 +1,8 @@
 /*
  *  motors.c
  *
+ *  Module for running the heli main and tail motors, using PWM
+ *
  *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
  *  Created on: 2/08/2020
  */
@@ -9,7 +11,6 @@
 #include <stdbool.h>
 
 #include "driverlib/sysctl.h"
-
 #include "inc/hw_memmap.h"
 
 #include "driverlib/pin_map.h" //Needed for pin configure
@@ -19,15 +20,26 @@
 
 #include "motors.h"
 
+// Motor structs
 motor_t mainMotor;
 motor_t tailMotor;
+
 uint32_t periodPWM;  // Period for the PWM
 
-uint8_t getPWM(void)
+
+// Return the current commanded PWM of the tail motor
+uint8_t getTailPWM(void)
 {
-    uint8_t duty = tailMotor.duty;
-    return duty;
+    return tailMotor.duty;
 }
+
+
+// Return the current commanded PWM of the main motor
+uint8_t getMainPWM(void)
+{
+    return mainMotor.duty;
+}
+
 
 // Initiate the PWM signals for the heli reg main and tail motors
 void initMotors(void)
@@ -65,19 +77,12 @@ void initMotors(void)
                     PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
-
-    // Disable the output.  Repeat this call with 'true' to turn O/P on.
-    PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, false);
-
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
 
-    // Disable the output.  Repeat this call with 'true' to turn O/P on.
-    PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
 
     // Initialisation is complete, so turn on the output.
     PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, true);
     PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, true);
-
 
     // Calculate the PWM PeriodPWM corresponding to the freq.
     periodPWM = SysCtlClockGet() / PWM_DIVIDER / 200;
@@ -95,11 +100,13 @@ void initMotors(void)
     tailMotor.gen = PWM_TAIL_GEN;
     tailMotor.outnum = PWM_TAIL_OUTNUM;
 
+    // Start the motors at the start duty
     setMotor(MOTOR_M, PWM_START_DUTY);
     setMotor(MOTOR_T, PWM_START_DUTY);
 }
 
-// Sets the main and tail motors' duty and PWM signal
+
+// Sets the PWM for the motors
 void setMotor(uint8_t main, uint8_t duty)
 {
     motor_t *motor;

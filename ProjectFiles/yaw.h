@@ -31,6 +31,12 @@
 #define DISK_INTERRUPTS     448             // The number of readings in the slotted disk (4 * (112 slots) in a rev)
 #define QUEUE_SIZE          1               // Matches the number of samples per period of jitter, ensuring it will not significantly deviate
 
+// Yaw Reference signal pin
+#define REF_PERIPH              SYSCTL_PERIPH_GPIOC
+#define REF_GPIO_BASE           GPIO_PORTC_BASE
+#define REF_INT_PIN             GPIO_INT_PIN_4
+#define REF_PIN                 GPIO_PIN_4
+
 //******************************************************************
 // Global Variables
 //******************************************************************

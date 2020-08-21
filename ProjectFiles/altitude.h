@@ -12,20 +12,8 @@
 #ifndef ALTITUDE_H_
 #define ALTITUDE_H_
 
-#include <stdint.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
-
-#include "inc/hw_memmap.h"
-
-#include "driverlib/sysctl.h"
-#include "driverlib/interrupt.h"
-#include "driverlib/adc.h"
 
 #include "FreeRTOS.h"
-#include "queue.h"
-#include "task.h"
 #include "timers.h"
 
 //******************************************************************
@@ -43,7 +31,6 @@
 
 /**
  * The handler for the ADC conversion complete interrupt.
- * Writes to the circular buffer
  */
 void ADCIntHandler(void);
 
@@ -51,7 +38,6 @@ void initADC (void);
 
 uint8_t getAlt(void);
 
-uint32_t getMidAlt(void);
 
 /**
  * A FreeRTOS task that calculates the mean altitude readings from the

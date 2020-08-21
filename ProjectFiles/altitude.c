@@ -8,14 +8,33 @@
  * Last modified: 8.8.2020
  */
 
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "inc/hw_memmap.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/adc.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "timers.h"
 #include "altitude.h"
 
 //******************************************************************
 // Global Variables
 //******************************************************************
-static uint32_t altitude = 0;
+static int16_t altitude = 0;
 static TimerHandle_t Alt_IN_Timer;
 static QueueHandle_t Alt_IN_Queue;
+
+
+// Returns current altitude
+uint8_t getAlt(void)
+{
+    return altitude;
+}
+
 
 // The handler for the ADC conversion complete interrupt.
 void ADCIntHandler(void)
@@ -90,17 +109,6 @@ void initADC (void)
     ADCIntEnable(ADC0_BASE, 3);
 }
 
-uint8_t getAlt(void)
-{
-    return altitude;
-}
-
-
-// Returns the mid altitude point in percentage
-uint32_t getMidAlt(void)
-{
-    return round(minAlt + ((maxAlt - minAlt) / 2));
-}
 
 /**
  * Calculates the average mean of ADC readings and altitude of the helicopter from a
@@ -114,18 +122,17 @@ void processAlt(void* pvParameter)
     uint32_t avg = 0;
     uint32_t landedAlt = 0;
 
-    /*
-     * start the timer (AltitudeTimer) and check if the Timer Queue is full with any time limit.
-     * So, it will keep checking the status of the queue for ever.
-     */
+    // Start the timer that initiates ADC conversions
     xTimerStart(Alt_IN_Timer, portMAX_DELAY);
 
     while(1)
     {
+        // Receives ADC sample from the queue, blocks task if queue is empty
         xQueueReceive(Alt_IN_Queue, &temp, portMAX_DELAY);
         sum += temp;
         count++;
 
+        // Averages the ADS samples
         if (count == Alt_IN_QUEUE_SIZE)
         {
             avg = (2 * sum + Alt_IN_QUEUE_SIZE) / 2 / Alt_IN_QUEUE_SIZE;
@@ -138,8 +145,10 @@ void processAlt(void* pvParameter)
                 landedAlt = avg;
             }
         }
+
         altitude = 100 * (landedAlt - avg) / VOLTAGE_SENSOR_RANGE;
 
+        // Limit alt to 0-100%
         if (altitude > 100)
         {
             altitude = 100;
