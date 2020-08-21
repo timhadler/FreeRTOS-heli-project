@@ -33,7 +33,7 @@ void initialize(void)
     // Set clock to 80MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
-    // INitialise all the perphierals
+    // INitialise all the peripherals and modules
     initUserInput();
     initADC();
     initDisplay();
