@@ -37,7 +37,7 @@
 // initialiseUSB_UART - 8 bits, 1 stop bit, no parity
 void initialiseUSB_UART (void);
 
-// initialiseUSB_UART - 8 bits, 1 stop bit, no parity
+//Converts the landed state to a string for display
 char* stateToString (uint8_t heliState);
 
 // Updates the UART communication

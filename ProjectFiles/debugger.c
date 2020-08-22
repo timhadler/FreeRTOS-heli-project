@@ -47,7 +47,7 @@ void initialiseUSB_UART (void)
 
 
 
-//convert the landed state to a string for display
+//Converts the landed state to a string for display
 char* stateToString(uint8_t heliState)
 {
     char* stateStr;
