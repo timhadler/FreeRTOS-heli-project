@@ -1,6 +1,8 @@
 /*
  * user_input.c
- *
+ *Increment/decrement that yaw or altitude value depending on the button presses,
+ *changes between landing/take off mode using switches and checks if button
+ * sequence have been achieved fo the speical modes.
  *  Created on: 18/08/2020
  *      Author: tch118
  */
