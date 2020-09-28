@@ -1,35 +1,24 @@
 /*
- * Main source file for ENCE464 Heli project
+ * main.c
+ *
+ *  Main source file for ENCE464 Heli project. This source file initialises the program and starts the scheduler out.
  *
  *  Created on: 27/07/2020
- *      Authors: tch118, ...
+ *  Contributers: Hassan Alhujhoj, Abdullah Naeem and Tim Hadler
+ *  Last modified: 08/08/2020
  */
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
-
-#include "inc/hw_memmap.h"
-#include "inc/hw_types.h"
-#include "inc/hw_ints.h"
-
-#include "driverlib/adc.h"
-#include "driverlib/pin_map.h"
 #include "driverlib/debug.h"
-#include "driverlib/gpio.h"
-#include "driverlib/pwm.h"
-#include "driverlib/systick.h"
 #include "driverlib/sysctl.h"
-#include "driverlib/interrupt.h"
 
-#include "utils/ustdlib.h"
-#include "stdlib.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "buttons4.h"
+#include "semphr.h"
 
 #include "OLEDDisplay.h"
+<<<<<<< HEAD
 #include "constants.h"
 
 
@@ -50,53 +39,45 @@ void blinkLED(void *pvParameters) {
         vTaskDelay(LED_BLINK_RATE / portTICK_RATE_MS);
     }
 }
+=======
+#include "motors.h"
+#include "yaw.h"
+#include "altitude.h"
+#include "controllers.h"
+#include "userInput.h"
+#include "debugger.h"
+#include "OLEDDisplay.h"
+>>>>>>> 3c95983310e1dc447b422e753fcfaa6b2d2cc8fb
 
 
 // Initialize the program
-void initialize(void) {
-    // Set the clock rate to 80 MHz
+void initialize(void)
+{
+    // Set clock to 80MHz
     SysCtlClockSet (SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
 
-    initButtons();
+    // INitialise all the peripherals and modules
+    initUserInput();
+    initADC();
     initDisplay();
-    static uint8_t led = LED_RED_PIN;
+    initMotors();
+    initYaw();
+    initialiseUSB_UART();
 
-    // For LED blinky task - initialize GPIO port F and then pin #1 (red) for output
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);                // activate internal bus clocking for GPIO port F
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF));        // busy-wait until GPIOF's bus clock is ready
+    // Create freeRTOS tasks
+    xTaskCreate(pollButtons, "Button Polling", 64, (void *) NULL, 3, NULL);
+    xTaskCreate(displayOLED, "OLED Display", 256, (void *) NULL, 3, NULL);
+    xTaskCreate(controller, "Controller", 64, (void *) NULL, 2, NULL);
+    xTaskCreate(processAlt, "Altitude Calc", 64, (void *) NULL, 4, NULL);
+    xTaskCreate(sendData, "UART", 256, (void *) NULL, 3, NULL);
+    xTaskCreate(FSM, "Finite State Machine", 64, (void *) NULL, 4, NULL);
 
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);         // PF_1 as output
-    GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD);    // doesn't need too much drive strength as the RGB LEDs on the TM4C123 launchpad are switched via N-type transistors
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0x00);               // off by default
-
-    if (pdTRUE != xTaskCreate(blinkLED, "Happy LED go blink blink", 32, (void *) &led, 4, NULL))
-    {
-        while(1);               // Oh no! Must not have had enough memory to create the task.
-    }
+    IntMasterEnable();
 }
 
 
-void main(void) {
+void main(void)
+{
     initialize();
     vTaskStartScheduler();
-
-    //*******************
-    // Code to test buttons
-    //*******************
-    uint8_t count = 0;
-    uint32_t clock_rate = SysCtlClockGet();
-
-    while(1) {
-        updateButtons();
-
-        if (checkButton (UP) == PUSHED) {
-            count++;
-            sprintf(text_buffer, "Button Presses %d", count);
-            writeDisplay(text_buffer, LINE_1);
-        }
-
-
-        SysCtlDelay(clock_rate / 150);
-    }
-    //*********************
 }
