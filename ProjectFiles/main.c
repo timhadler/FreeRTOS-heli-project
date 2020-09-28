@@ -40,7 +40,7 @@ char text_buffer[16];    // global for now
 
 
 
-void blinkLED(void *pvParameters) {\
+void blinkLED(void *pvParameters) {
     uint8_t pin = (*(uint8_t *) pvParameters);
     uint8_t current = 0;
 
